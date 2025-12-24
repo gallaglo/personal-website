@@ -1,14 +1,20 @@
 export default function Projects() {
   const projects = [
     {
-      title: "whereami",
-      description: "A containerized application that displays environmental details about its cloud runtime environment and provides an intelligent chat interface powered by Gemini AI. Designed for deployment on Google Cloud Platform services like Cloud Run or GKE.",
+      title: "Personal Website",
+      description: "This website! A minimal personal site built with Next.js, TypeScript, and Tailwind CSS. Deployed on Google Cloud Run.",
+      tech: ["Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "Docker", "Cloud Run"],
+      link: "https://github.com/gallaglo/personal-website",
+    },
+    {
+      title: "Whereami",
+      description: "A containerized application that displays environmental details about its cloud runtime environment. Designed for deployment on Google Cloud Platform services like Cloud Run or GKE.",
       tech: ["Python", "Gemini AI", "Flask", "Docker", "GCP", "LangChain"],
       link: "https://github.com/gallaglo/whereami",
     },
     {
       title: "GCP Demos, Notes & Tricks",
-      description: "Hands-on learning materials and production-ready blueprints for Google Cloud Platform. Covers BigQuery, Compute Engine, GKE, Cloud Run, and includes reusable Terraform modules for infrastructure as code.",
+      description: "Hands-on learning materials and production-ready blueprints for Google Cloud Platform.",
       tech: ["TypeScript", "Python", "Terraform", "GCP", "Kubernetes"],
       link: "https://github.com/gallaglo/gcp-demos-notes-and-tricks",
     },
