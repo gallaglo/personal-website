@@ -16,11 +16,13 @@ Built with Next.js, TypeScript, Tailwind CSS, and shadcn/ui. Hosted at [logangal
 ## Local Development
 
 Install dependencies:
+
 ```bash
 npm install
 ```
 
 Run the development server:
+
 ```bash
 npm run dev
 ```
@@ -37,22 +39,26 @@ npm start
 ## Deploying to Cloud Run
 
 1. Build the Docker image:
+
 ```bash
 docker build -t personal-website .
 ```
 
-2. Test locally:
+1. Test locally:
+
 ```bash
 docker run -p 8080:8080 personal-website
 ```
 
-3. Tag and push to Google Container Registry:
+1. Tag and push to Google Container Registry:
+
 ```bash
 docker tag personal-website gcr.io/YOUR_PROJECT_ID/personal-website
 docker push gcr.io/YOUR_PROJECT_ID/personal-website
 ```
 
-4. Deploy to Cloud Run:
+1. Deploy to Cloud Run:
+
 ```bash
 gcloud run deploy personal-website \
   --image gcr.io/YOUR_PROJECT_ID/personal-website \
