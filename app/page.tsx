@@ -1,3 +1,5 @@
+import { Github, Linkedin } from "lucide-react";
+
 export default function Home() {
   return (
     <div className="prose prose-gray max-w-none">
@@ -21,13 +23,26 @@ export default function Home() {
           maintainable code and sharing knowledge with the community.
         </p>
 
-        <h2 className="text-xl font-semibold mt-8 mb-4 text-gray-900">Connect</h2>
-        <p>
-          You can find me on{" "}
-          <a href="https://github.com/gallaglo" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">GitHub</a>{" "}
-          or{" "}
-          <a href="mailto:hello@logangallagher.com" className="text-blue-600 hover:underline">email me</a>.
-        </p>
+        <div className="flex gap-4 mt-8">
+          <a
+            href="https://github.com/gallaglo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-700 hover:text-gray-900 transition-colors"
+            aria-label="GitHub"
+          >
+            <Github size={24} />
+          </a>
+          <a
+            href="https://www.linkedin.com/in/logan-gallagher-9ba44895/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-700 hover:text-gray-900 transition-colors"
+            aria-label="LinkedIn"
+          >
+            <Linkedin size={24} />
+          </a>
+        </div>
       </div>
     </div>
   );

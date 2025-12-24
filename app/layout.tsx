@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Lora } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/header";
 
-const inter = Inter({ subsets: ["latin"] });
+const lora = Lora({
+  weight: ["400", "600"],
+  subsets: ["latin"]
+});
 
 export const metadata: Metadata = {
   title: "Logan Gallagher - Software Developer & Trainer",
@@ -18,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={lora.className}>
         <Header />
         <main className="max-w-3xl mx-auto px-4 py-8">
           {children}
