@@ -14,6 +14,10 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        sans: ["var(--font-inter)"],
+        serif: ["var(--font-lora)"],
+      },
       colors: {},
     },
   },

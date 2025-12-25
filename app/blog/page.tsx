@@ -9,12 +9,12 @@ export default function Blog() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Blog</h1>
+      <h1 className="text-3xl font-bold mb-8 font-sans">Blog</h1>
 
       <div className="space-y-8">
         {posts.map((post, index) => (
           <article key={index} className="border-b border-gray-200 pb-6">
-            <h2 className="text-xl font-semibold mb-2">
+            <h2 className="text-xl font-semibold mb-2 font-sans">
               <a href="#" className="hover:text-gray-600">
                 {post.title}
               </a>

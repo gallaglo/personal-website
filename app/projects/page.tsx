@@ -22,14 +22,14 @@ export default function Projects() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Projects</h1>
+      <h1 className="text-3xl font-bold mb-8 font-sans">Projects</h1>
 
-      <h2 className="text-xl font-semibold mb-6 text-gray-700">Code</h2>
+      <h2 className="text-xl font-semibold mb-6 text-gray-700 font-sans">Code</h2>
 
       <div className="space-y-8">
         {projects.map((project, index) => (
           <div key={index} className="border-b border-gray-200 pb-6">
-            <h3 className="text-xl font-semibold mb-2">
+            <h3 className="text-xl font-semibold mb-2 font-sans">
               <a
                 href={project.link}
                 className="text-blue-600 hover:text-blue-800 hover:underline"
@@ -44,7 +44,7 @@ export default function Projects() {
               {project.tech.map((tech, i) => (
                 <span
                   key={i}
-                  className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
+                  className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-sans"
                 >
                   {tech}
                 </span>

@@ -38,7 +38,7 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-md mt-6">
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-md mt-6 font-sans">
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
           Name

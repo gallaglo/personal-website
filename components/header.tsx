@@ -4,7 +4,7 @@ export function Header() {
   return (
     <header className="border-b border-gray-200">
       <div className="max-w-3xl mx-auto px-4 py-6">
-        <nav className="flex items-center justify-between">
+        <nav className="flex items-center justify-between font-sans">
           <Link href="/" className="text-lg font-semibold hover:text-gray-600">
             Logan Gallagher
           </Link>
