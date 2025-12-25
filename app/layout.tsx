@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Inter, Lora } from "next/font/google";
+import { Montserrat, Lora } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/header";
 
-const inter = Inter({
+const montserrat = Montserrat({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-montserrat",
 });
 
 const lora = Lora({
@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${lora.variable} font-serif`}>
+      <body className={`${montserrat.variable} ${lora.variable} font-serif`}>
         <Header />
         <main className="max-w-3xl mx-auto px-4 py-8">
           {children}
