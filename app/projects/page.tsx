@@ -54,6 +54,24 @@ export default function Projects() {
         ))}
       </div>
 
+      <h2 className="text-xl font-semibold mb-6 mt-12 text-gray-700 font-sans">Podcasts</h2>
+
+      <div className="border-b border-gray-200 pb-6">
+        <h3 className="text-xl font-semibold mb-2 font-sans">
+          <a
+            href="https://cloudoutloudpodcast.buzzsprout.com/"
+            className="text-blue-600 hover:text-blue-800 hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Cloud Out Loud
+          </a>
+        </h3>
+        <p className="text-gray-700 mb-3">
+          A podcast about cloud computing, technology trends, and industry insights with my uncle Jon Gallagher.
+        </p>
+      </div>
+
       <p className="mt-12 text-gray-600">
         More projects coming soon, including art, photography, and agentic AI projects.
       </p>
