@@ -5,13 +5,12 @@ export default function BlogPost() {
         <h1 className="text-4xl font-bold mb-2 font-sans">
           Building a Contact Form with the Gmail API and OAuth2
         </h1>
-        <time className="text-gray-500">December 25, 2024</time>
+        <time className="text-gray-500">December 26, 2025</time>
       </header>
 
       <p className="lead text-xl text-gray-700 mb-6">
-        When I built my contact form, I wanted something simple but solid - no third-party
-        services, no complicated setup. Turns out the Gmail API is perfect for this, and
-        it's surprisingly straightforward once you understand the OAuth2 flow.
+        When I started setting up my site I wanted to include a contact form, but I didn't feel like dealing with another third-party service.  
+        Turns out the Gmail API is perfect for this, and it's surprisingly straightforward once I got my arms around the OAuth2 flow.
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Why the Gmail API?</h2>
@@ -24,20 +23,15 @@ export default function BlogPost() {
         <li><strong>Use what I already have</strong> - My existing Gmail account, no new accounts needed</li>
         <li><strong>Actually secure</strong> - OAuth2 handles everything, no passwords floating around</li>
         <li><strong>Generous free tier</strong> - 2,000 emails/day is way more than I'll ever need</li>
-        <li><strong>Rock solid</strong> - It's Google's official API, so reliability is excellent</li>
+        <li><strong>Battle-tested</strong> - Gmail handles billions of emails a day worldwide, so reliability isn't a concern</li>
         <li><strong>Deploy anywhere</strong> - Works on Cloud Run, Vercel, wherever</li>
       </ul>
       <p>
-        The magic trick here is using OAuth2 refresh tokens. You authorize once, get a token,
-        and then emails just work automatically. No user clicking "allow" every time someone
-        fills out your contact form - that would be ridiculous.
+        I was surprised by how easy it was to set up the OAuth2 refresh tokens. You authorize once, get a token,
+        and then emails just work automatically!
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">How OAuth2 Actually Works Here</h2>
-      <p>
-        Okay, so OAuth2 can be confusing, but for our use case it's actually pretty simple.
-        Here's the flow:
-      </p>
       <ol className="list-decimal pl-6 mb-4">
         <li><strong>You click authorize</strong> - One time, in your browser, you say "yes, this app can send emails"</li>
         <li><strong>Google gives you a refresh token</strong> - Think of it as a long-lived permission slip</li>
@@ -45,7 +39,7 @@ export default function BlogPost() {
         <li><strong>Deploy and forget</strong> - Same token works on your laptop, in production, anywhere</li>
       </ol>
       <p>
-        The beautiful part: you authorize <em>once</em> on your local machine, grab the refresh
+        You authorize <em>once</em> on your local machine, grab the refresh
         token, and deploy it. From then on, emails just work. No clicking, no user interaction,
         no expiration headaches (unless you revoke it yourself).
       </p>
@@ -70,8 +64,7 @@ export default function BlogPost() {
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">OAuth Consent Screen</h3>
       <p>
-        This part always feels a bit silly when you're the only user, but Google needs to know
-        what permissions you're asking for:
+        Google needs to know what permissions you're asking for:
       </p>
       <ol className="list-decimal pl-6 mb-4">
         <li>Go to APIs & Services → OAuth consent screen</li>
@@ -92,7 +85,7 @@ export default function BlogPost() {
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Getting Your Refresh Token</h3>
       <p>
-        I wrote a little script (<code>scripts/get-gmail-token.js</code>) that handles the
+        I wrote a small script (<code>scripts/get-gmail-token.js</code>) that handles the
         one-time OAuth dance. It spins up a local server, opens your browser, and spits out
         the refresh token you need:
       </p>
@@ -150,14 +143,13 @@ export GMAIL_CLIENT_SECRET="your-client-secret"
 npm run get-gmail-token`}</code>
       </pre>
       <p>
-        Copy the refresh token it outputs and you're golden. That's it - never have to do this again.
+        Copy the refresh token it outputs. That's it. Never have to do this again.
       </p>
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">The Gmail Utility Module</h3>
       <p>
         All the Gmail API stuff lives in <code>lib/gmail.ts</code>. It handles OAuth,
-        constructs properly formatted MIME messages (because email is stuck in 1982),
-        and sends them via the API:
+        constructs properly formatted MIME messages and sends them via the API:
       </p>
       <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
         <code>{`// lib/gmail.ts
@@ -241,8 +233,7 @@ export async function sendEmail(params: {
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">The Contact Form Endpoint</h3>
       <p>
-        The actual API route (<code>app/api/contact/route.ts</code>) is pretty straightforward.
-        It validates the form data and calls our Gmail utility:
+        The actual API route (<code>app/api/contact/route.ts</code>) simply validates the form data and calls our Gmail utility:
       </p>
       <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
         <code>{`// app/api/contact/route.ts
@@ -338,43 +329,38 @@ done`}</code>
       <p>
         The refresh token works everywhere. Local dev? Same token in <code>.env.local</code>.
         Production? Same token in Secret Manager. The googleapis library just handles refreshing
-        access tokens automatically. It's kind of beautiful.
+        access tokens automatically.
       </p>
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Email Is Weirdly Complicated</h3>
       <p>
         The Gmail API wants messages in RFC 2822 format with MIME boundaries and base64url
-        encoding. It's a bit arcane, but once you have the utility function working, you
-        never think about it again. Just call <code>sendEmail()</code> and move on with your life.
+        encoding. The utility function allowed me to never think about it again. 
+        Just call <code>sendEmail()</code>.
       </p>
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">No Runtime Surprises</h3>
       <p>
         This isn't one of those OAuth flows where users have to click "allow" when they submit
         your form. You authorize once, the token lives on your server, and emails just go out.
-        Exactly what you want for a contact form.
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Why I Like This Setup</h2>
       <ul className="list-disc pl-6 mb-4">
         <li><strong>Secure by default</strong> - OAuth2 tokens, no passwords to leak</li>
         <li><strong>Completely free</strong> - 2,000 emails/day is way more than I'll ever need</li>
-        <li><strong>Rock solid</strong> - It's Google's API, so it's not going anywhere</li>
-        <li><strong>No vendor lock-in</strong> - No third-party service to worry about</li>
         <li><strong>Set and forget</strong> - Token refresh is automatic, deploys anywhere</li>
       </ul>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Final Thoughts</h2>
       <p>
-        Honestly, this turned out way simpler than I expected. The OAuth2 flow seems
-        intimidating at first, but once you understand the refresh token pattern, it's
-        just a one-time setup. After that, it's fire-and-forget.
+        This turned out way simpler than I expected. Setting up the OAuth2 flow seemed intimidating at first, 
+        but once I understood the refresh token pattern, it's just a one-time setup. After that, it's fire-and-forget.
       </p>
       <p className="mt-4">
-        For a personal website or small project, this hits the sweet spot. You get
-        enterprise-grade security without the complexity, and you're using tools you
-        already have (Gmail, GCP). No new accounts, no billing, no third-party dependencies.
-        Just clean, simple email that works.
+        For a personal website or small project, this hits the sweet spot. You get enterprise-grade security 
+        without the complexity, and in my case it allowed me to use tools I already rely on (Gmail, GCP). 
+        No new accounts, no additional billing, no third-party dependencies. Just clean, simple email that works.
       </p>
     </article>
   );

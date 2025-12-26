@@ -2,7 +2,7 @@ export default function Blog() {
   const posts = [
     {
       title: "Building a Contact Form with the Gmail API and OAuth2",
-      date: "2024-12-25",
+      date: "12/26/2025",
       slug: "gmail-api-contact-form",
       excerpt: "Learn how to implement a contact form using the official Gmail API with OAuth2 authentication - a production-ready solution without third-party email services.",
     },
