@@ -11,8 +11,8 @@ export default function BlogPost() {
       </header>
 
       <p className="lead text-xl text-gray-700 mb-6">
-        I set up a secure pipeline that builds my website, stores it (as a container image) to <a href="https://cloud.google.com/artifact-registry" className="text-blue-600 hover:underline">Artifact Registry</a>, and then
-        deploys to <a href="https://cloud.google.com/run" className="text-blue-600 hover:underline">Cloud Run</a> with automatic <a href="https://docs.cloud.google.com/run/docs/managing/revisions" className="text-blue-600 hover:underline">revision URLs</a> for previewing changes to the site.
+        I set up a secure pipeline that builds my website into a container image, stores it in <a href="https://cloud.google.com/artifact-registry" className="text-blue-600 hover:underline">Artifact Registry</a>, 
+        and deploys to <a href="https://cloud.google.com/run" className="text-blue-600 hover:underline">Cloud Run</a> generating a unique preview URL for each <a href="https://docs.cloud.google.com/run/docs/managing/revisions" className="text-blue-600 hover:underline">revision</a>.
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Why Workload Identity Federation?</h2>
@@ -84,8 +84,8 @@ export default function BlogPost() {
     style M fill:#99f,stroke:#333,stroke-width:2px`} />
 
       <p className="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 text-gray-700">
-        <strong>Note:</strong> Enterprise applications typically separate Continuous Integration (CI) and Continuous Deployment (CD) 
-        — building once and promoting the same image across environments. For my personal site, combining build and deploy in one workflow is simpler and sufficient.
+        <strong>Note:</strong> Enterprise applications typically separate Continuous Integration (CI) and Continuous Deployment (CD) by building once and promoting the same image across environments. 
+        For my personal site, combining build and deploy in one workflow is simpler and sufficient.
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Prerequisites</h2>
@@ -259,15 +259,13 @@ if: github.ref != 'refs/heads/main'  # Preview deployment`}</code>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Conclusion</h2>
       <p>
-        I've been really happy with this setup. Having preview URLs for every branch has made it
-        so much easier to catch issues before they hit production, and not having to worry about
-        rotating service account keys is a huge relief. The initial setup took some trial and error
-        (especially that IAM Credentials API gotcha!), but now that it's running, deployments just work.
+        I've been really happy with this setup. Having preview URLs for every branch has made it so much easier to catch issues before publishing, 
+        and not having to worry about rotating service account keys is a huge relief. The initial setup took some trial and error (especially that IAM Credentials API gotcha!), 
+        but now that it's running, deployments just work.
       </p>
       <p className="mt-4">
-        If you're deploying containerized apps to GCP, I'd definitely recommend going this route.
-        The security benefits alone make it worth the effort, and the preview URL workflow has
-        genuinely improved how I work on this site.
+        If you're deploying containerized apps to GCP, I'd definitely recommend going this route. The security benefits alone make it worth the effort, 
+        and the preview URL workflow has genuinely improved how I work on this site.
       </p>
     </article>
   );
