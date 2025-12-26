@@ -282,6 +282,20 @@ export async function POST(request: NextRequest) {
 }`}</code>
       </pre>
 
+      <p className="mt-4">Here's what the contact form looks like when someone fills it out:</p>
+      <img
+        src="/blog/contact-form-submission-redacted.png"
+        alt="Screenshot of a filled contact form showing name, email, and message fields with a submit button"
+        className="rounded-lg border border-gray-200 shadow-md my-6"
+      />
+
+      <p className="mt-4">And here's the email I receive in my Gmail inbox:</p>
+      <img
+        src="/blog/email-received-redacted.png"
+        alt="Screenshot of Gmail inbox showing a received contact form submission email with sender details and message content"
+        className="rounded-lg border border-gray-200 shadow-md my-6"
+      />
+
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Deploying to Production</h2>
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Use Secret Manager</h3>
