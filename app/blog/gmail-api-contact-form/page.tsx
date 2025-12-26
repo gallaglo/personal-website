@@ -9,8 +9,16 @@ export default function BlogPost() {
       </header>
 
       <p className="lead text-xl text-gray-700 mb-6">
-        When I started setting up my site I wanted to include a contact form, but I didn't feel like dealing with another third-party service.  
+        When I started setting up my site I wanted to include a contact form, but I didn't feel like dealing with another third-party service.
         Turns out the Gmail API is perfect for this, and it's surprisingly straightforward once I got my arms around the OAuth2 flow.
+      </p>
+
+      <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Why a Contact Form?</h2>
+      <p>
+        My first thought was simple: just link my email address on the site. But I quickly
+        realized I didn't want to expose that personal information publicly on the internet.
+        A contact form solves this by letting visitors reach me while keeping my actual email address
+        private.
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Why the Gmail API?</h2>
