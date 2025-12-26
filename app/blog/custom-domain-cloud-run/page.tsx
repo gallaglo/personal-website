@@ -55,6 +55,22 @@ export default function BlogPost() {
         <li>Google will provide a TXT record for verification</li>
       </ol>
 
+      <img
+        src="/blog/google-search-console.png"
+        alt="Google Search Console welcome screen showing Domain and URL prefix property type options with domain field filled in"
+        className="my-6 rounded-lg border border-gray-200"
+      />
+
+      <p className="mb-4">
+        After entering your domain and clicking Continue, Google will provide you with a TXT record:
+      </p>
+
+      <img
+        src="/blog/verify-domain-ownership-redacted.png"
+        alt="Google Search Console domain verification screen displaying the TXT record value to copy and add to DNS settings"
+        className="my-6 rounded-lg border border-gray-200"
+      />
+
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Adding the Verification Record</h3>
       <p>Add the TXT record to your DNS provider:</p>
       <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
@@ -63,10 +79,23 @@ Host: @
 Value: google-site-verification=abc123xyz...
 TTL: Automatic (or 1 minute for faster propagation)`}</code>
       </pre>
+
+      <img
+        src="/blog/txt-record-redacted.png"
+        alt="Namecheap DNS configuration panel showing the Google verification TXT record added with host @ and automatic TTL"
+        className="my-6 rounded-lg border border-gray-200"
+      />
+
       <p className="mb-4">
         After adding the record, click <strong>Verify</strong> in Search Console. DNS propagation
         usually takes a few minutes but can take up to 48 hours.
       </p>
+
+      <img
+        src="/blog/ownership-verified.png"
+        alt="Google Search Console success message showing 'Ownership verified' with green checkmark for domain verification"
+        className="my-6 rounded-lg border border-gray-200"
+      />
 
       <p className="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 text-gray-700">
         <strong>Note:</strong> If your DNS is managed by cPanel or another hosting provider
@@ -125,6 +154,12 @@ Type: AAAA | Host: @ | Value: 2001:4860:4802:34::15
 Type: AAAA | Host: @ | Value: 2001:4860:4802:36::15
 Type: AAAA | Host: @ | Value: 2001:4860:4802:38::15`}</code>
       </pre>
+
+      <img
+        src="/blog/txt-a-and-aaaa-records-redacted.png"
+        alt="Namecheap DNS panel displaying all configured records including the TXT verification record, four A records for IPv4, and four AAAA records for IPv6"
+        className="my-6 rounded-lg border border-gray-200"
+      />
 
       <p className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-500 text-gray-700">
         <strong>Important:</strong> Use <code>@</code> for the Host field, which represents
@@ -202,6 +237,21 @@ curl -I https://logangallagher.com`}</code>
       <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
         <code>{`gcloud domains list-user-verified --project your-project-id`}</code>
       </pre>
+
+      <p className="mb-4">
+        If verification fails, you'll see an error message like this:
+      </p>
+
+      <img
+        src="/blog/ownership-verification-failed.png"
+        alt="Google Search Console error showing 'Ownership verification failed' message indicating the TXT record could not be found"
+        className="my-6 rounded-lg border border-gray-200"
+      />
+
+      <p className="mb-4">
+        This usually means the TXT record hasn't propagated yet. Wait a few hours and try again, or check that
+        you added the record to the correct DNS provider (your registrar vs. hosting provider).
+      </p>
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Issue: DNS Not Managed by Registrar</h3>
       <p className="mb-4">
