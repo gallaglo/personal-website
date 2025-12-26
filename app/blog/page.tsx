@@ -4,7 +4,7 @@ export default function Blog() {
       title: "Building a Contact Form with the Gmail API and OAuth2",
       date: "12/26/2025",
       slug: "gmail-api-contact-form",
-      excerpt: "Learn how to implement a contact form using the official Gmail API with OAuth2 authentication - a production-ready solution without third-party email services.",
+      excerpt: "Why I used the Gmail API with OAuth2 for my contact form instead of third-party email services.",
     },
     {
       title: "Deploying to Cloud Run with GitHub Actions and Workload Identity Federation",
