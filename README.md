@@ -115,3 +115,12 @@ npm start
 - [Tailwind CSS](https://tailwindcss.com/) - Styling
 - [shadcn/ui](https://ui.shadcn.com/) - UI components
 - [Lucide React](https://lucide.dev/) - Icons
+
+## License
+
+This project uses a dual licensing structure:
+
+- **Code**: Licensed under the [MIT License](LICENSE) - feel free to use, modify, and learn from the code
+- **Content**: Licensed under [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) - personal writing, images, and creative content are protected
+
+See the [LICENSE](LICENSE) file for full details.
