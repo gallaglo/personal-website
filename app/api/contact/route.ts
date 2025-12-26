@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import { sendEmail, validateGmailConfig } from "@/lib/gmail";
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate Gmail API configuration
+    validateGmailConfig();
+
     const { name, email, message } = await request.json();
 
     // Validate inputs
@@ -13,22 +16,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create transporter using Gmail SMTP
-    // You'll need to set these environment variables:
-    // GMAIL_USER: your gmail address
-    // GMAIL_APP_PASSWORD: an app-specific password from Google
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: "Invalid email address" },
+        { status: 400 }
+      );
+    }
 
-    // Send email
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
-      to: process.env.GMAIL_USER, // Send to yourself
+    // Send email using Gmail API
+    await sendEmail({
+      from: process.env.GMAIL_USER!,
+      to: process.env.GMAIL_USER!,
       replyTo: email,
       subject: `Contact form submission from ${name}`,
       text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,

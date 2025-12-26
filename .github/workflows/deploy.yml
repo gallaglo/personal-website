@@ -81,4 +81,5 @@ jobs:
             --platform=managed \
             --allow-unauthenticated \
             --no-traffic \
-            --tag=${BRANCH_NAME}
+            --tag=${BRANCH_NAME} \
+            --update-secrets="GMAIL_USER=gmail-user:latest,GMAIL_CLIENT_ID=gmail-client-id:latest,GMAIL_CLIENT_SECRET=gmail-client-secret:latest,GMAIL_REFRESH_TOKEN=gmail-refresh-token:latest"
