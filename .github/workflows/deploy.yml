@@ -9,7 +9,7 @@ env:
   IMAGE: main
 
 jobs:
-  build-and-push:
+  build-push-and-deploy:
     runs-on: ubuntu-latest
 
     permissions:
