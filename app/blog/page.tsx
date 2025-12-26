@@ -8,9 +8,9 @@ export default function Blog() {
     },
     {
       title: "Deploying to Cloud Run with GitHub Actions and Workload Identity Federation",
-      date: "2024-12-25",
+      date: "12/26/2025",
       slug: "github-actions-cloud-run",
-      excerpt: "Learn how to set up a secure CI/CD pipeline that builds Docker containers, pushes them to Google Artifact Registry, and deploys to Cloud Run with automatic preview URLs for every branch.",
+      excerpt: "How I built a secure, automated pipeline for deploying my site to Cloud Run, featuring branch preview URLs and keyless authentication.",
     },
   ];
 

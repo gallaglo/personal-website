@@ -1,3 +1,5 @@
+import Mermaid from '@/components/mermaid';
+
 export default function BlogPost() {
   return (
     <article className="prose prose-gray max-w-none">
@@ -5,13 +7,12 @@ export default function BlogPost() {
         <h1 className="text-4xl font-bold mb-2 font-sans">
           Deploying to Cloud Run with GitHub Actions and Workload Identity Federation
         </h1>
-        <time className="text-gray-500">December 25, 2024</time>
+        <time className="text-gray-500">December 26, 2025</time>
       </header>
 
       <p className="lead text-xl text-gray-700 mb-6">
-        Learn how to set up a secure CI/CD pipeline that builds Docker containers,
-        pushes them to Google Artifact Registry, and deploys to Cloud Run with
-        automatic preview URLs for every branch.
+        I set up a secure pipeline that builds my website into a container image, stores it in <a href="https://cloud.google.com/artifact-registry" className="text-blue-600 hover:underline">Artifact Registry</a>, 
+        and deploys to <a href="https://cloud.google.com/run" className="text-blue-600 hover:underline">Cloud Run</a> generating a unique preview URL for each <a href="https://docs.cloud.google.com/run/docs/managing/revisions" className="text-blue-600 hover:underline">revision</a>.
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Why Workload Identity Federation?</h2>
@@ -25,10 +26,30 @@ export default function BlogPost() {
         <li>Additional operational overhead</li>
       </ul>
       <p>
-        Workload Identity Federation solves these problems by allowing GitHub Actions
+        <a href="https://docs.cloud.google.com/iam/docs/workload-identity-federation" className="text-blue-600 hover:underline">Workload Identity Federation</a> solves these problems by allowing GitHub Actions
         to authenticate using short-lived tokens instead of static keys. No credentials
         to manage, rotate, or worry about leaking.
       </p>
+
+      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">How Authentication Works</h3>
+      <p className="mb-4">
+        Here's the authentication flow when GitHub Actions authenticates to GCP using Workload Identity Federation:
+      </p>
+      <Mermaid chart={`sequenceDiagram
+    participant GHA as GitHub Actions
+    participant GitHub as GitHub OIDC
+    participant WIF as Workload Identity Pool
+    participant SA as Service Account
+    participant GCP as GCP Services
+
+    GHA->>GitHub: Request OIDC token
+    GitHub->>GHA: Return OIDC token (JWT)
+    GHA->>WIF: Exchange OIDC token
+    WIF->>WIF: Validate token claims
+    WIF->>SA: Request impersonation
+    SA->>GHA: Return short-lived access token
+    GHA->>GCP: Use token for API calls
+    Note over GHA,GCP: No long-lived credentials stored`} />
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Architecture Overview</h2>
       <p>Our CI/CD pipeline does the following:</p>
@@ -37,6 +58,35 @@ export default function BlogPost() {
         <li><strong>Push to Artifact Registry</strong> - All images are stored for auditability</li>
         <li><strong>Deploy to Cloud Run</strong> - Main branch deploys to production, other branches create preview URLs</li>
       </ol>
+
+      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Pipeline Workflow</h3>
+      <p className="mb-4">
+        The diagram below shows the complete CI/CD pipeline flow, including the conditional logic for main vs feature branch deployments:
+      </p>
+      <Mermaid chart={`flowchart TD
+    A[Push to Branch] --> B[Checkout Code]
+    B --> C[Authenticate via WIF]
+    C --> D[Build Docker Image]
+    D --> E[Tag with Commit SHA]
+    E --> F[Push to Artifact Registry]
+    F --> G{Is Main Branch?}
+    G -->|Yes| H[Tag as :latest]
+    G -->|No| I[Use SHA tag only]
+    H --> J[Deploy to Cloud Run]
+    I --> K[Deploy with --no-traffic]
+    J --> L[Receives Production Traffic]
+    K --> M[Preview URL Created]
+    M --> N[https://branch-name---service.run.app]
+    L --> O[https://service.run.app]
+
+    style G fill:#f9f,stroke:#333,stroke-width:2px
+    style L fill:#9f9,stroke:#333,stroke-width:2px
+    style M fill:#99f,stroke:#333,stroke-width:2px`} />
+
+      <p className="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 text-gray-700">
+        <strong>Note:</strong> Enterprise applications typically separate Continuous Integration (CI) and Continuous Deployment (CD) by building once and promoting the same image across environments. 
+        For my personal site, combining build and deploy in one workflow is simpler and sufficient.
+      </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Prerequisites</h2>
       <p>Before setting up the pipeline, ensure you have:</p>
@@ -207,36 +257,15 @@ if: github.ref != 'refs/heads/main'  # Preview deployment`}</code>
         After the initial deployment, branch previews will work correctly.
       </p>
 
-      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Issue: "Unauthenticated request" errors</h3>
-      <p className="mb-4">
-        <strong>Solution:</strong> Verify your GitHub secrets are correct, especially <code>WIF_PROVIDER</code>.
-        The provider path should use your project <em>number</em> (not ID) and look like:
-      </p>
-      <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
-        <code>{`projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-pool/providers/github-provider`}</code>
-      </pre>
-
-      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Issue: Docker build fails copying public directory</h3>
-      <p className="mb-4">
-        <strong>Solution:</strong> Next.js expects a <code>public/</code> directory when using standalone output.
-        Create an empty directory if you don't have static assets yet:
-      </p>
-      <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
-        <code>{`mkdir -p public && touch public/.gitkeep`}</code>
-      </pre>
-
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Conclusion</h2>
       <p>
-        This setup provides a secure, automated deployment pipeline with preview URLs
-        for every branch. Workload Identity Federation eliminates the need to manage
-        service account keys, while Cloud Run's revision URLs make it easy to test
-        changes before they hit production.
+        I've been really happy with this setup. Having preview URLs for every branch has made it so much easier to catch issues before publishing, 
+        and not having to worry about rotating service account keys is a huge relief. The initial setup took some trial and error (especially that IAM Credentials API gotcha!), 
+        but now that it's running, deployments just work.
       </p>
       <p className="mt-4">
-        The combination of GitHub Actions, Workload Identity Federation, and Cloud Run
-        creates a modern, secure CI/CD pipeline that scales with your team. While there
-        are a few setup steps and potential gotchas, once configured, it provides a
-        seamless deployment experience.
+        If you're deploying containerized apps to GCP, I'd definitely recommend going this route. The security benefits alone make it worth the effort, 
+        and the preview URL workflow has genuinely improved how I work on this site.
       </p>
     </article>
   );
