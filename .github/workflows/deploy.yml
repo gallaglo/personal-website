@@ -61,7 +61,8 @@ jobs:
             --image=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest \
             --region=${{ secrets.GCP_REGION }} \
             --platform=managed \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --traffic latest=100
 
       - name: Deploy to Cloud Run (preview)
         if: github.ref != 'refs/heads/main'
