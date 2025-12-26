@@ -38,6 +38,40 @@ export default function BlogPost() {
         <li><strong>Deploy to Cloud Run</strong> - Main branch deploys to production, other branches create preview URLs</li>
       </ol>
 
+      <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Prerequisites</h2>
+      <p>Before setting up the pipeline, ensure you have:</p>
+      <ul className="list-disc pl-6 mb-4">
+        <li>A Google Cloud project with billing enabled</li>
+        <li>The gcloud CLI installed and authenticated</li>
+        <li>A GitHub repository for your code</li>
+      </ul>
+
+      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Enable Required APIs</h3>
+      <p>
+        These APIs must be enabled before setting up Workload Identity Federation:
+      </p>
+      <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
+        <code>{`# Enable required APIs
+gcloud services enable iamcredentials.googleapis.com \\
+  artifactregistry.googleapis.com \\
+  run.googleapis.com \\
+  --project=\${PROJECT_ID}`}</code>
+      </pre>
+      <p className="mb-4">
+        <strong>Important:</strong> The IAM Service Account Credentials API (<code>iamcredentials.googleapis.com</code>) is
+        required for Workload Identity Federation. If this isn't enabled, you'll get authentication errors when GitHub
+        Actions tries to push images.
+      </p>
+
+      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Create Artifact Registry Repository</h3>
+      <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
+        <code>{`gcloud artifacts repositories create personal-website \\
+  --repository-format=docker \\
+  --location=us-west1 \\
+  --project=\${PROJECT_ID} \\
+  --description="Container images for personal website"`}</code>
+      </pre>
+
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Setting Up Workload Identity Federation</h2>
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">1. Create a Workload Identity Pool</h3>
@@ -156,6 +190,41 @@ if: github.ref != 'refs/heads/main'  # Preview deployment`}</code>
         <li><strong>Isolation</strong> - Branch deployments don't affect production</li>
       </ul>
 
+      <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Common Issues and Solutions</h2>
+
+      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Issue: "IAM Service Account Credentials API has not been used"</h3>
+      <p className="mb-4">
+        <strong>Solution:</strong> Enable the API with:
+      </p>
+      <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
+        <code>{`gcloud services enable iamcredentials.googleapis.com --project=\${PROJECT_ID}`}</code>
+      </pre>
+
+      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Issue: "--no-traffic not supported when creating a new service"</h3>
+      <p className="mb-4">
+        <strong>Solution:</strong> The first deployment must come from the main branch.
+        Cloud Run doesn't allow <code>--no-traffic</code> when creating a new service.
+        After the initial deployment, branch previews will work correctly.
+      </p>
+
+      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Issue: "Unauthenticated request" errors</h3>
+      <p className="mb-4">
+        <strong>Solution:</strong> Verify your GitHub secrets are correct, especially <code>WIF_PROVIDER</code>.
+        The provider path should use your project <em>number</em> (not ID) and look like:
+      </p>
+      <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
+        <code>{`projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-pool/providers/github-provider`}</code>
+      </pre>
+
+      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Issue: Docker build fails copying public directory</h3>
+      <p className="mb-4">
+        <strong>Solution:</strong> Next.js expects a <code>public/</code> directory when using standalone output.
+        Create an empty directory if you don't have static assets yet:
+      </p>
+      <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
+        <code>{`mkdir -p public && touch public/.gitkeep`}</code>
+      </pre>
+
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Conclusion</h2>
       <p>
         This setup provides a secure, automated deployment pipeline with preview URLs
@@ -165,7 +234,9 @@ if: github.ref != 'refs/heads/main'  # Preview deployment`}</code>
       </p>
       <p className="mt-4">
         The combination of GitHub Actions, Workload Identity Federation, and Cloud Run
-        creates a modern, secure CI/CD pipeline that scales with your team.
+        creates a modern, secure CI/CD pipeline that scales with your team. While there
+        are a few setup steps and potential gotchas, once configured, it provides a
+        seamless deployment experience.
       </p>
     </article>
   );
