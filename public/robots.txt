@@ -1,0 +1,28 @@
+# Allow all search engines with rate limiting
+User-agent: *
+Allow: /
+Crawl-delay: 10
+
+# Protect API routes from crawling
+Disallow: /api/
+
+# Aggressive AI crawlers - stricter rate limits
+User-agent: CCBot
+User-agent: anthropic-ai
+User-agent: Claude-Web
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: Google-Extended
+User-agent: FacebookBot
+User-agent: Bytespider
+Crawl-delay: 30
+Disallow: /api/
+
+# Block completely abusive crawlers (known for ignoring rules)
+User-agent: SemrushBot
+User-agent: AhrefsBot
+User-agent: DotBot
+Disallow: /
+
+# Sitemap location (uncomment and update with your domain)
+# Sitemap: https://yourdomain.com/sitemap.xml
