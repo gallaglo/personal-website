@@ -1,0 +1,77 @@
+name: Build and Deploy to Cloud Run
+
+on:
+  push:
+  workflow_dispatch:
+
+env:
+  REPOSITORY: personal-website
+  IMAGE: main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: production
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }} \
+            .
+
+      - name: Tag as latest (main branch only)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker tag \
+            ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }} \
+            ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Push latest tag (main branch only)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest
+
+      - name: Deploy to Cloud Run (main branch)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          gcloud run deploy personal-website \
+            --image=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest \
+            --region=${{ secrets.GCP_REGION }} \
+            --platform=managed \
+            --allow-unauthenticated
+
+      - name: Deploy to Cloud Run (preview)
+        if: github.ref != 'refs/heads/main'
+        run: |
+          BRANCH_NAME=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9-]/-/g' | tr '[:upper:]' '[:lower:]')
+          gcloud run deploy personal-website \
+            --image=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }} \
+            --region=${{ secrets.GCP_REGION }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --no-traffic \
+            --tag=${BRANCH_NAME}
