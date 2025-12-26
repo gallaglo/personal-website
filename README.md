@@ -6,13 +6,13 @@ Built with Next.js, TypeScript, Tailwind CSS, and shadcn/ui. Hosted at [logangal
 
 ## Features
 
-- About Me page with contact form
-- Contact form using Gmail SMTP (no third-party services)
-- Blog stub (ready for your posts)
+- About Me page
+- Contact form using Gmail API with OAuth2 (secure, no app passwords)
+- Blog with technical posts
 - Projects showcase with GitHub repos
 - Minimal, clean design with papyrus-inspired background
 - Fully responsive
-- Ready for Cloud Run deployment
+- Cloud Run deployment with GitHub Actions CI/CD
 
 ## Local Development
 
@@ -24,22 +24,52 @@ npm install
 
 ### Configure the Contact Form
 
-The contact form uses Gmail SMTP to send emails. Set up your environment variables:
+The contact form uses the Gmail API with OAuth2 authentication. Set up your credentials:
 
-1. Copy the example env file:
+1. **Enable Gmail API in GCP:**
+
+   ```bash
+   gcloud services enable gmail.googleapis.com --project=YOUR_PROJECT_ID
+   ```
+
+2. **Create OAuth2 Credentials** in GCP Console:
+
+   - Go to APIs & Services → Credentials
+   - Create OAuth 2.0 Client ID (Web application)
+   - Add redirect URI: `http://localhost:3000/api/auth/callback`
+   - Save the Client ID and Client Secret
+
+3. **Configure OAuth Consent Screen:**
+
+   - Go to APIs & Services → OAuth consent screen
+   - User Type: External
+   - Add scope: `https://www.googleapis.com/auth/gmail.send`
+   - Add your Gmail as test user
+
+4. **Get Refresh Token:**
+
+   ```bash
+   export GMAIL_CLIENT_ID="your-client-id"
+   export GMAIL_CLIENT_SECRET="your-client-secret"
+   npm run get-gmail-token
+   ```
+
+   This opens a browser for authorization and outputs your refresh token.
+
+5. **Create `.env.local` with your credentials:**
+
    ```bash
    cp .env.example .env.local
    ```
 
-2. Get a Gmail App Password:
-   - Go to https://myaccount.google.com/apppasswords
-   - Generate a new app password for "Mail"
-   - Copy the 16-character password
+   Then update `.env.local` with your actual values:
 
-3. Update `.env.local` with your credentials:
-   ```
+   ```env
    GMAIL_USER=your-email@gmail.com
-   GMAIL_APP_PASSWORD=your-16-char-app-password
+   GMAIL_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   GMAIL_CLIENT_SECRET=your-client-secret
+   GMAIL_REFRESH_TOKEN=your-refresh-token
+   GMAIL_REDIRECT_URI=http://localhost:3000/api/auth/callback
    ```
 
 Run the development server:
@@ -64,6 +94,7 @@ This project can be deployed to Google Cloud Run either manually from your local
 ### Prerequisites
 
 Before deploying, ensure you have:
+
 - A Google Cloud project with billing enabled
 - The gcloud CLI installed and authenticated
 - Docker installed (for local deployments)
@@ -75,7 +106,8 @@ These APIs must be enabled in your GCP project:
 ```bash
 export PROJECT_ID="your-project-id"
 
-gcloud services enable iamcredentials.googleapis.com \
+gcloud services enable gmail.googleapis.com \
+  iamcredentials.googleapis.com \
   artifactregistry.googleapis.com \
   run.googleapis.com \
   --project=${PROJECT_ID}
@@ -93,52 +125,53 @@ gcloud artifacts repositories create personal-website \
   --description="Container images for personal website"
 ```
 
-### Option 1: Manual Deployment from Command Line
+## Deployment
 
-1. Build the Docker image:
-   ```bash
-   docker build -t personal-website .
-   ```
+This project uses GitHub Actions for automated deployments. See the [CI/CD blog post](/blog/github-actions-cloud-run) for setup details.
 
-2. Test locally:
-   ```bash
-   docker run -p 8080:8080 personal-website
-   ```
+### Production Secrets Setup
 
-3. Tag and push to Artifact Registry:
-   ```bash
-   export REGION="us-west1"  # Use the same region as your repository
+Store Gmail API credentials in Secret Manager:
 
-   docker tag personal-website ${REGION}-docker.pkg.dev/${PROJECT_ID}/personal-website/personal-website:latest
-   docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/personal-website/personal-website:latest
-   ```
+```bash
+# Create secrets
+echo -n "your-email@gmail.com" | gcloud secrets create gmail-user --data-file=-
+echo -n "your-client-id" | gcloud secrets create gmail-client-id --data-file=-
+echo -n "your-client-secret" | gcloud secrets create gmail-client-secret --data-file=-
+echo -n "your-refresh-token" | gcloud secrets create gmail-refresh-token --data-file=-
 
-4. Deploy to Cloud Run with environment variables:
-   ```bash
-   gcloud run deploy personal-website \
-     --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/personal-website/personal-website:latest \
-     --platform managed \
-     --region ${REGION} \
-     --allow-unauthenticated \
-     --set-env-vars GMAIL_USER=your-email@gmail.com,GMAIL_APP_PASSWORD=your-app-password
-   ```
+# Get your Cloud Run service account
+gcloud run services describe personal-website \
+  --region=YOUR_REGION \
+  --format="value(spec.template.spec.serviceAccountName)"
 
-   **Note:** For better security, use Secret Manager instead of environment variables:
-   ```bash
-   # Create secrets
-   echo -n "your-email@gmail.com" | gcloud secrets create gmail-user --data-file=-
-   echo -n "your-app-password" | gcloud secrets create gmail-password --data-file=-
+# Grant access to secrets (replace YOUR_SERVICE_ACCOUNT)
+for secret in gmail-user gmail-client-id gmail-client-secret gmail-refresh-token; do
+  gcloud secrets add-iam-policy-binding $secret \
+    --member="serviceAccount:YOUR_SERVICE_ACCOUNT" \
+    --role="roles/secretmanager.secretAccessor"
+done
+```
 
-   # Deploy with secrets
-   gcloud run deploy personal-website \
-     --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/personal-website/personal-website:latest \
-     --platform managed \
-     --region ${REGION} \
-     --allow-unauthenticated \
-     --set-secrets GMAIL_USER=gmail-user:latest,GMAIL_APP_PASSWORD=gmail-password:latest
-   ```
+### Manual Deployment
 
-### Option 2: Automated Deployment with GitHub Actions
+If you need to deploy manually:
+
+```bash
+# Build and push
+docker build -t YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/personal-website/main:latest .
+docker push YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/personal-website/main:latest
+
+# Deploy with secrets
+gcloud run deploy personal-website \
+  --image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/personal-website/main:latest \
+  --platform managed \
+  --region YOUR_REGION \
+  --allow-unauthenticated \
+  --update-secrets="GMAIL_USER=gmail-user:latest,GMAIL_CLIENT_ID=gmail-client-id:latest,GMAIL_CLIENT_SECRET=gmail-client-secret:latest,GMAIL_REFRESH_TOKEN=gmail-refresh-token:latest"
+```
+
+### Automated Deployment with GitHub Actions
 
 For a secure, automated CI/CD pipeline using Workload Identity Federation (no long-lived credentials required):
 
@@ -205,6 +238,7 @@ gcloud iam service-accounts add-iam-policy-binding \
 Create a production environment in your GitHub repository and add these secrets:
 
 - `WIF_PROVIDER`: Full path to your Workload Identity Provider
+
   ```bash
   # Get the provider path
   gcloud iam workload-identity-pools providers describe github-provider \

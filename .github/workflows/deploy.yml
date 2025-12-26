@@ -61,7 +61,15 @@ jobs:
             --image=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest \
             --region=${{ secrets.GCP_REGION }} \
             --platform=managed \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --update-secrets="GMAIL_USER=gmail-user:latest,GMAIL_CLIENT_ID=gmail-client-id:latest,GMAIL_CLIENT_SECRET=gmail-client-secret:latest,GMAIL_REFRESH_TOKEN=gmail-refresh-token:latest"
+
+      - name: Route traffic to latest revision
+        if: github.ref == 'refs/heads/main'
+        run: |
+          gcloud run services update-traffic personal-website \
+            --to-latest \
+            --region=${{ secrets.GCP_REGION }}
 
       - name: Deploy to Cloud Run (preview)
         if: github.ref != 'refs/heads/main'
@@ -73,4 +81,5 @@ jobs:
             --platform=managed \
             --allow-unauthenticated \
             --no-traffic \
-            --tag=${BRANCH_NAME}
+            --tag=${BRANCH_NAME} \
+            --update-secrets="GMAIL_USER=gmail-user:latest,GMAIL_CLIENT_ID=gmail-client-id:latest,GMAIL_CLIENT_SECRET=gmail-client-secret:latest,GMAIL_REFRESH_TOKEN=gmail-refresh-token:latest"
