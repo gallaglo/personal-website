@@ -247,6 +247,18 @@ Once your Cloud Run service is deployed, you can map a custom domain to it.
 - A domain registered with a registrar (e.g., Namecheap, Google Domains, etc.)
 - Access to your domain's DNS settings
 
+### Enable Required APIs
+
+Before creating the domain mapping, ensure these APIs are enabled in your project:
+
+```bash
+gcloud services enable compute.googleapis.com \
+  certificatemanager.googleapis.com \
+  --project ${PROJECT_ID}
+```
+
+**Important:** Without these APIs, SSL certificate provisioning will fail. The Compute Engine API is required for load balancer SSL termination, and Certificate Manager API handles certificate provisioning.
+
 ### Step 1: Verify Domain Ownership
 
 Google Cloud requires domain verification before allowing domain mapping:
@@ -348,7 +360,16 @@ gcloud beta run domain-mappings create \
   --project ${PROJECT_ID}
 ```
 
-Add the same A and AAAA records, but use `www` as the Host instead of `@`.
+Unlike the root domain which uses A and AAAA records, the www subdomain uses a **CNAME record**:
+
+```
+Type: CNAME
+Host: www
+Value: ghs.googlehosted.com.
+TTL: Automatic
+```
+
+Add this single CNAME record to your DNS provider. The SSL certificate will be automatically provisioned for the www subdomain (15-60 minutes). Once complete, both domains will work with HTTPS.
 
 ### Verifying the Setup
 
@@ -361,6 +382,42 @@ curl -I http://your-domain.com
 # Test HTTPS (should return 200 OK)
 curl -I https://your-domain.com
 ```
+
+### Troubleshooting
+
+**Certificate Stuck in "Pending" Status:**
+
+If your certificate shows "Unknown" status with "Certificate issuance pending" message:
+
+1. **Enable Required APIs** (most common fix):
+   ```bash
+   gcloud services enable compute.googleapis.com \
+     certificatemanager.googleapis.com \
+     --project ${PROJECT_ID}
+   ```
+   Wait 15-20 minutes for the next automatic retry cycle.
+
+2. **Verify DNS Records:**
+   ```bash
+   dig +short your-domain.com A
+   dig +short your-domain.com AAAA
+   ```
+   All 4 A records and 4 AAAA records should be returned.
+
+3. **Recreate Mapping** (if still stuck after 30+ minutes):
+   ```bash
+   # Delete and recreate to trigger fresh certificate request
+   gcloud beta run domain-mappings delete \
+     --domain your-domain.com \
+     --region us-west1 \
+     --project ${PROJECT_ID}
+
+   gcloud beta run domain-mappings create \
+     --service personal-website \
+     --domain your-domain.com \
+     --region us-west1 \
+     --project ${PROJECT_ID}
+   ```
 
 ### Benefits
 

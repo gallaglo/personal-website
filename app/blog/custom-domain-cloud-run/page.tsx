@@ -23,6 +23,22 @@ export default function BlogPost() {
         <li>Control over your domain's DNS settings</li>
       </ul>
 
+      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Enable Required APIs</h3>
+      <p>
+        Before creating the domain mapping, ensure these Google Cloud APIs are enabled in your project.
+        Without them, SSL certificate provisioning will fail silently:
+      </p>
+      <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
+        <code>{`gcloud services enable compute.googleapis.com \\
+  certificatemanager.googleapis.com \\
+  --project your-project-id`}</code>
+      </pre>
+      <p className="mb-4">
+        <strong>Compute Engine API</strong> is required for the load balancer to perform SSL termination.
+        <strong> Certificate Manager API</strong> handles the certificate provisioning process. Missing these
+        APIs is the most common reason for certificates getting stuck in "pending" status.
+      </p>
+
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Step 1: Verify Domain Ownership</h2>
       <p>
         Before Google Cloud will let you map a custom domain to Cloud Run, you must verify
@@ -196,10 +212,50 @@ curl -I https://logangallagher.com`}</code>
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Issue: Certificate Stuck in "Pending"</h3>
       <p className="mb-4">
-        <strong>Solution:</strong> Verify your DNS records are correct using <code>dig</code>.
-        Certificate provisioning requires all DNS records to be properly configured. Wait at least
-        15-60 minutes for the process to complete.
+        This is the most common issue. The certificate status shows "Unknown" with a message like
+        "Certificate issuance pending. The challenge data was not visible through the public internet."
       </p>
+      <p className="mb-4">
+        <strong>Solution 1 - Enable Required APIs:</strong> The most common cause is missing API enablement.
+        Ensure both Compute Engine API and Certificate Manager API are enabled:
+      </p>
+      <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
+        <code>{`# Enable the required APIs
+gcloud services enable compute.googleapis.com \\
+  certificatemanager.googleapis.com \\
+  --project your-project-id
+
+# Wait 15-20 minutes for the next retry cycle
+# Google retries certificate provisioning every ~15 minutes`}</code>
+      </pre>
+      <p className="mb-4">
+        <strong>Solution 2 - Verify DNS:</strong> Confirm your DNS records are correct using <code>dig</code>:
+      </p>
+      <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
+        <code>{`dig +short your-domain.com A
+dig +short your-domain.com AAAA`}</code>
+      </pre>
+      <p className="mb-4">
+        All 4 A records and 4 AAAA records should be returned. If not, wait for DNS propagation.
+      </p>
+      <p className="mb-4">
+        <strong>Solution 3 - Recreate Mapping:</strong> If the certificate is still stuck after enabling
+        the APIs and waiting 30+ minutes, delete and recreate the domain mapping:
+      </p>
+      <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
+        <code>{`# Delete the mapping
+gcloud beta run domain-mappings delete \\
+  --domain your-domain.com \\
+  --region us-west1 \\
+  --project your-project-id
+
+# Recreate it (this triggers a fresh certificate request)
+gcloud beta run domain-mappings create \\
+  --service personal-website \\
+  --domain your-domain.com \\
+  --region us-west1 \\
+  --project your-project-id`}</code>
+      </pre>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Optional: Set Up www Subdomain</h2>
       <p>
@@ -213,8 +269,21 @@ curl -I https://logangallagher.com`}</code>
   --region us-west1 \\
   --project your-project-id`}</code>
       </pre>
+
       <p className="mb-4">
-        Then add the same A and AAAA records, but use <code>www</code> as the Host instead of <code>@</code>.
+        Unlike the root domain which uses A and AAAA records, the www subdomain uses a <strong>CNAME record</strong>:
+      </p>
+      <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
+        <code>{`Type: CNAME
+Host: www
+Value: ghs.googlehosted.com.
+TTL: Automatic`}</code>
+      </pre>
+
+      <p className="mb-4">
+        Add this single CNAME record to your DNS provider. The SSL certificate will be automatically
+        provisioned for the www subdomain just like the root domain (15-60 minutes). Once complete,
+        both <code>your-domain.com</code> and <code>www.your-domain.com</code> will work with HTTPS.
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Understanding the Architecture</h2>
