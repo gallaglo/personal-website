@@ -52,7 +52,7 @@ export default function BlogPost() {
         no expiration headaches (unless you revoke it yourself).
       </p>
 
-      <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Setting Up GCP (The Fun Part)</h2>
+      <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Setting Up GCP</h2>
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">First, Enable the Gmail API</h3>
       <p>This is the easy part - just one command:</p>
@@ -76,9 +76,9 @@ export default function BlogPost() {
       </p>
       <ol className="list-decimal pl-6 mb-4">
         <li>Go to APIs & Services → OAuth consent screen</li>
-        <li>Pick "External" (even though it's just you - standard Gmail accounts need this)</li>
+        <li>Pick "External" (standard Gmail accounts require this setting)</li>
         <li>Add the scope: <code>https://www.googleapis.com/auth/gmail.send</code></li>
-        <li>Add yourself as a test user (yes, really)</li>
+        <li>Add yourself as a test user</li>
       </ol>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">The Code</h2>
@@ -347,17 +347,17 @@ done`}</code>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">A Few Things Worth Knowing</h2>
 
-      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">One Token to Rule Them All</h3>
+      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">The Refresh Token Works Everywhere</h3>
       <p>
         The refresh token works everywhere. Local dev? Same token in <code>.env.local</code>.
         Production? Same token in Secret Manager. The googleapis library just handles refreshing
         access tokens automatically.
       </p>
 
-      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Email Is Weirdly Complicated</h3>
+      <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Email Format Requirements</h3>
       <p>
         The Gmail API wants messages in RFC 2822 format with MIME boundaries and base64url
-        encoding. The utility function allowed me to never think about it again. 
+        encoding. The utility function handles the complexity automatically. 
         Just call <code>sendEmail()</code>.
       </p>
 
@@ -376,13 +376,13 @@ done`}</code>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Final Thoughts</h2>
       <p>
-        This turned out way simpler than I expected. Setting up the OAuth2 flow seemed intimidating at first, 
-        but once I understood the refresh token pattern, it's just a one-time setup. After that, it's fire-and-forget.
+        This is simpler than it appears. Setting up the OAuth2 flow seemed intimidating at first, 
+        but once I understood the refresh token pattern, it's a one-time setup. After that, it's fire-and-forget.
       </p>
       <p className="mt-4">
         For a personal website or small project, this hits the sweet spot. You get enterprise-grade security 
         without the complexity, and in my case it allowed me to use tools I already rely on (Gmail, GCP). 
-        No new accounts, no additional billing, no third-party dependencies. Just clean, simple email that works.
+        No new accounts, no additional billing, no third-party dependencies. Clean, simple email that works.
       </p>
     </article>
   );

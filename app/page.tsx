@@ -11,16 +11,8 @@ export default function Home() {
         </p>
 
         <p>
-          I&apos;m passionate about building quality software and helping others develop their
-          technical skills. This is where I share my thoughts, projects, and experiences in
-          software development and training.
-        </p>
-
-        <h2 className="text-xl font-semibold mt-8 mb-4 text-gray-900 font-sans">What I Do</h2>
-        <p>
-          As a software developer and trainer, I work on building robust applications and
-          teaching others the craft of software development. I believe in writing clean,
-          maintainable code and sharing knowledge with the community.
+          I build cloud-based applications in Python, Go, and TypeScript, and teach others to do the same. 
+          Beyond technical tutorials and project writeups, I write about how technology shapes society and share photography and art.
         </p>
 
         <div className="flex gap-4 mt-8">
