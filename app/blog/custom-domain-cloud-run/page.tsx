@@ -9,8 +9,8 @@ export default function BlogPost() {
       </header>
 
       <p className="lead text-xl text-gray-700 mb-6">
-        After deploying my website to Cloud Run, I wanted to point my custom domain to it instead of using the default Cloud Run URL. 
-        This requires domain verification, DNS configuration, and SSL certificate provisioning.
+        After deploying my website to Cloud Run, I pointed my custom domain to it using Cloud Run's <a href="https://docs.cloud.google.com/run/docs/mapping-custom-domains" className="text-blue-600 hover:underline">domain mapping</a> feature.
+        Cloud Run automatically provisions SSL certificates and routes traffic through Google's global load balancers. This post covers domain verification, DNS configuration, and certificate provisioning.
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">What I Started With</h2>
@@ -97,7 +97,7 @@ TTL: Automatic (or 1 minute for faster propagation)`}</code>
       />
 
       <p className="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 text-gray-700">
-        <strong>Note:</strong> If your DNS is managed by cPanel or another hosting provider
+        <strong>Note:</strong> If your DNS is managed by another hosting provider
         (not your domain registrar), you'll need to add the record there instead. I switched
         to my registrar's DNS for simpler management since I wasn't using other hosting services.
       </p>
@@ -248,25 +248,24 @@ curl -I https://logangallagher.com`}</code>
       />
 
       <p className="mb-4">
-        This usually meant the TXT record hadn't propagated yet. I waited a few hours and tried again, and also
+        This typically means the TXT record hasn't propagated yet. I waited a few hours and tried again, and also
         double-checked that I'd added the record to the correct DNS provider (my registrar, not a hosting provider).
       </p>
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">DNS Not Managed by Registrar</h3>
       <p className="mb-4">
-        I initially had my DNS managed by a hosting provider instead of my registrar. I either needed to add
+        I initially had my DNS managed by a hosting provider (cPanel) rather than my registrar (Namecheap). I either needed to add
         the records there or switch DNS management back to my registrar (usually called "BasicDNS" or similar).
-        I ended up switching back for simpler management.
+        I switched to my registrar's DNS for simpler management. 
       </p>
 
       <h3 className="text-xl font-semibold mt-6 mb-3 font-sans">Certificate Stuck in "Pending"</h3>
       <p className="mb-4">
-        This was the most frustrating issue I hit. The certificate status showed "Unknown" with a message like
-        "Certificate issuance pending. The challenge data was not visible through the public internet."
+        The certificate status may show "Unknown" with a message like "Certificate issuance pending. The challenge data was not visible through the public internet." 
+        This is usually caused by missing API enablement (Solution 1), but if that doesn't resolve it, work through the following troubleshooting steps.
       </p>
       <p className="mb-4">
-        <strong>Solution 1 - Enable Required APIs:</strong> The most common cause turned out to be missing API enablement.
-        I made sure both Compute Engine API and Certificate Manager API were enabled:
+        <strong>Solution 1 - Enable Required APIs:</strong> Missing API enablement is the most common cause. Enable both required APIs:
       </p>
       <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
         <code>{`# Enable the required APIs
@@ -278,18 +277,17 @@ gcloud services enable compute.googleapis.com \\
 # Google retries certificate provisioning every ~15 minutes`}</code>
       </pre>
       <p className="mb-4">
-        <strong>Solution 2 - Verify DNS:</strong> I also confirmed my DNS records were correct using <code>dig</code>:
+        <strong>Solution 2 - Verify DNS:</strong> Confirm DNS records are correct using <code>dig</code>:
       </p>
       <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
         <code>{`dig +short your-domain.com A
 dig +short your-domain.com AAAA`}</code>
       </pre>
       <p className="mb-4">
-        All 4 A records and 4 AAAA records should be returned. If not, I had to wait for DNS propagation.
+        All 4 A records and 4 AAAA records should be returned. If not, wait for DNS propagation.
       </p>
       <p className="mb-4">
-        <strong>Solution 3 - Recreate Mapping:</strong> If the certificate was still stuck after enabling
-        the APIs and waiting 30+ minutes, I deleted and recreated the domain mapping:
+        <strong>Solution 3 - Recreate Mapping:</strong> If the certificate is still stuck after enabling APIs and waiting 30+ minutes, delete and recreate the domain mapping:
       </p>
       <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
         <code>{`# Delete the mapping
