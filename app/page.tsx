@@ -11,7 +11,7 @@ export default function Home() {
         </p>
 
         <p>
-          I build cloud-based applications in Python, Go, and TypeScript, and teach others to do the same. 
+          I enjoy building cloud-based applications, primarily working with Python, Go, and TypeScript, and I love helping others learn these tools too. 
           Beyond technical tutorials and project writeups, I write about how technology shapes society and share photography and art.
         </p>
 

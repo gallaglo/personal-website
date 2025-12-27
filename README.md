@@ -8,9 +8,8 @@ Built with Next.js, TypeScript, Tailwind CSS, and shadcn/ui. Hosted at [logangal
 
 - About Me page
 - Contact form using Gmail API with OAuth2 (secure, no app passwords)
-- Blog with technical posts
+- Blog with technical posts, art and my musings
 - Projects showcase with GitHub repos
-- Minimal, clean design with papyrus-inspired background
 - Fully responsive
 - Cloud Run deployment with GitHub Actions CI/CD
 
