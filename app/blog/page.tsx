@@ -2,7 +2,7 @@ export default function Blog() {
   const posts = [
     {
       title: "Setting Up a Custom Domain for Cloud Run",
-      date: "12/26/2025",
+      date: "12/27/2025",
       slug: "custom-domain-cloud-run",
       excerpt: "A complete guide to mapping a custom domain to Cloud Run, including domain verification, DNS configuration, and SSL certificate provisioning.",
     },
