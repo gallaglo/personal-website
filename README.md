@@ -271,6 +271,196 @@ The GitHub Actions workflow (`.github/workflows/deploy.yml`) will:
 - **Audit Trail**: All images tagged with commit SHA
 - **Isolation**: Branch deployments don't affect production
 
+## Setting Up a Custom Domain
+
+Once your Cloud Run service is deployed, you can map a custom domain to it.
+
+### Prerequisites
+
+- A deployed Cloud Run service
+- A domain registered with a registrar (e.g., Namecheap, Google Domains, etc.)
+- Access to your domain's DNS settings
+
+### Enable Required APIs
+
+Before creating the domain mapping, ensure these APIs are enabled in your project:
+
+```bash
+gcloud services enable compute.googleapis.com \
+  certificatemanager.googleapis.com \
+  --project ${PROJECT_ID}
+```
+
+**Important:** Without these APIs, SSL certificate provisioning will fail. The Compute Engine API is required for load balancer SSL termination, and Certificate Manager API handles certificate provisioning.
+
+### Step 1: Verify Domain Ownership
+
+Google Cloud requires domain verification before allowing domain mapping:
+
+1. Go to [Google Search Console](https://search.google.com/search-console/welcome)
+2. Select **Domain** as the property type (not URL prefix)
+3. Enter your domain (e.g., `logangallagher.com`)
+4. Google will provide a TXT record for verification
+
+Add the TXT record to your DNS provider:
+```
+Type: TXT
+Host: @
+Value: google-site-verification=abc123xyz...
+TTL: Automatic (or 1 minute for faster propagation)
+```
+
+Click **Verify** in Search Console after adding the record.
+
+**Note:** If your DNS is managed by cPanel or another hosting provider, you may need to switch DNS management to your registrar (usually called "BasicDNS") for simpler management.
+
+### Step 2: Install gcloud Beta Components
+
+Domain mapping requires the beta command group:
+
+```bash
+gcloud components install beta --quiet
+```
+
+### Step 3: Create Domain Mapping
+
+Map your verified domain to your Cloud Run service:
+
+```bash
+gcloud beta run domain-mappings create \
+  --service personal-website \
+  --domain your-domain.com \
+  --region us-west1 \
+  --project ${PROJECT_ID}
+```
+
+This command will output DNS records that you need to add to your domain registrar.
+
+### Step 4: Configure DNS Records
+
+Add the following records to your DNS provider (the exact IPs will be provided by the command above):
+
+**A Records (IPv4):**
+```
+Type: A | Host: @ | Value: 216.239.32.21
+Type: A | Host: @ | Value: 216.239.34.21
+Type: A | Host: @ | Value: 216.239.36.21
+Type: A | Host: @ | Value: 216.239.38.21
+```
+
+**AAAA Records (IPv6):**
+```
+Type: AAAA | Host: @ | Value: 2001:4860:4802:32::15
+Type: AAAA | Host: @ | Value: 2001:4860:4802:34::15
+Type: AAAA | Host: @ | Value: 2001:4860:4802:36::15
+Type: AAAA | Host: @ | Value: 2001:4860:4802:38::15
+```
+
+**Important:** Use `@` for the Host field (represents the root domain). Delete any existing A or AAAA records that conflict.
+
+### Step 5: Verify DNS Propagation
+
+Check that DNS is propagating correctly:
+
+```bash
+dig +short your-domain.com A
+```
+
+You should see all four IP addresses. DNS propagation usually takes a few minutes but can take up to 48 hours.
+
+### Step 6: Wait for SSL Certificate
+
+Google Cloud automatically provisions a free SSL certificate. This process takes 15-60 minutes.
+
+Check certificate status:
+```bash
+gcloud beta run domain-mappings describe \
+  --domain your-domain.com \
+  --region us-west1 \
+  --project ${PROJECT_ID}
+```
+
+Look for `CertificateProvisioned: True` in the output.
+
+### Optional: Add www Subdomain
+
+To support both `www.your-domain.com` and `your-domain.com`:
+
+```bash
+gcloud beta run domain-mappings create \
+  --service personal-website \
+  --domain www.your-domain.com \
+  --region us-west1 \
+  --project ${PROJECT_ID}
+```
+
+Unlike the root domain which uses A and AAAA records, the www subdomain uses a **CNAME record**:
+
+```
+Type: CNAME
+Host: www
+Value: ghs.googlehosted.com.
+TTL: Automatic
+```
+
+Add this single CNAME record to your DNS provider. The SSL certificate will be automatically provisioned for the www subdomain (15-60 minutes). Once complete, both domains will work with HTTPS.
+
+### Verifying the Setup
+
+Once the SSL certificate is provisioned, test your domain:
+
+```bash
+# Test HTTP (should redirect to HTTPS)
+curl -I http://your-domain.com
+
+# Test HTTPS (should return 200 OK)
+curl -I https://your-domain.com
+```
+
+### Troubleshooting
+
+**Certificate Stuck in "Pending" Status:**
+
+If your certificate shows "Unknown" status with "Certificate issuance pending" message:
+
+1. **Enable Required APIs** (most common fix):
+   ```bash
+   gcloud services enable compute.googleapis.com \
+     certificatemanager.googleapis.com \
+     --project ${PROJECT_ID}
+   ```
+   Wait 15-20 minutes for the next automatic retry cycle.
+
+2. **Verify DNS Records:**
+   ```bash
+   dig +short your-domain.com A
+   dig +short your-domain.com AAAA
+   ```
+   All 4 A records and 4 AAAA records should be returned.
+
+3. **Recreate Mapping** (if still stuck after 30+ minutes):
+   ```bash
+   # Delete and recreate to trigger fresh certificate request
+   gcloud beta run domain-mappings delete \
+     --domain your-domain.com \
+     --region us-west1 \
+     --project ${PROJECT_ID}
+
+   gcloud beta run domain-mappings create \
+     --service personal-website \
+     --domain your-domain.com \
+     --region us-west1 \
+     --project ${PROJECT_ID}
+   ```
+
+### Benefits
+
+- **Free SSL certificates** - Automatically provisioned and renewed
+- **Global load balancing** - Traffic routed to nearest Google edge location
+- **Automatic HTTPS redirect** - HTTP traffic redirects to HTTPS by default
+- **Persistent across deployments** - Domain mapping survives service updates
+- **No additional configuration** - Future deployments automatically work with your custom domain
+
 ## Customization
 
 - Edit `app/page.tsx` to update your About page content
