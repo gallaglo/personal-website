@@ -1,28 +1,20 @@
+import { posts } from "@/lib/posts";
+
 export default function Blog() {
-  const posts = [
-    {
-      title: "Setting Up a Custom Domain for Cloud Run",
-      date: "12/27/2025",
-      slug: "custom-domain-cloud-run",
-      excerpt: "A complete guide to mapping a custom domain to Cloud Run, including domain verification, DNS configuration, and SSL certificate provisioning.",
-    },
-    {
-      title: "Building a Contact Form with the Gmail API and OAuth2",
-      date: "12/26/2025",
-      slug: "gmail-api-contact-form",
-      excerpt: "Why I used the Gmail API with OAuth2 for my contact form instead of third-party email services.",
-    },
-    {
-      title: "Deploying to Cloud Run with GitHub Actions and Workload Identity Federation",
-      date: "12/26/2025",
-      slug: "github-actions-cloud-run",
-      excerpt: "How I built a secure, automated pipeline for deploying my site to Cloud Run, featuring branch preview URLs and keyless authentication.",
-    },
-  ];
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8 font-sans">Blog</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold font-sans">Blog</h1>
+        <a
+          href="/blog/rss.xml"
+          className="text-sm text-gray-600 hover:text-blue-600 hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          RSS Feed
+        </a>
+      </div>
 
       <div className="space-y-8">
         {posts.map((post, index) => (
