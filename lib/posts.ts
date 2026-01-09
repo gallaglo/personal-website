@@ -7,6 +7,12 @@ export interface BlogPost {
 
 export const posts: BlogPost[] = [
   {
+    title: "Monitoring Gmail API Errors with Cloud Logging",
+    date: "1/8/2026",
+    slug: "monitoring-gmail-api-errors",
+    excerpt: "How I set up proactive monitoring for Gmail API failures using Cloud Logging metrics and alerts, so I know immediately when my contact form breaks.",
+  },
+  {
     title: "Setting Up a Custom Domain for Cloud Run",
     date: "12/27/2025",
     slug: "custom-domain-cloud-run",

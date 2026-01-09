@@ -1,0 +1,19 @@
+displayName: "Gmail API Authentication Error Alert"
+documentation:
+  content: "Alert when Gmail API returns invalid_grant error, indicating the refresh token needs to be regenerated."
+  mimeType: "text/markdown"
+conditions:
+  - displayName: "Gmail API invalid_grant error detected"
+    conditionThreshold:
+      filter: 'resource.type = "cloud_run_revision" AND metric.type = "logging.googleapis.com/user/gmail_api_errors"'
+      comparison: COMPARISON_GT
+      thresholdValue: 0
+      duration: 0s
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_RATE
+notificationChannels:
+  - projects/project-7298bc07-f89d-4a07-8cd/notificationChannels/12977808431838674475
+alertStrategy:
+  autoClose: 86400s
+combiner: OR
