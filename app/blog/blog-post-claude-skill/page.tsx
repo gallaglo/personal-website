@@ -1,0 +1,93 @@
+export default function BlogPost() {
+  return (
+    <article className="prose prose-gray max-w-none">
+      <header className="mb-8">
+        <h1 className="text-4xl font-bold mb-2 font-sans">
+          Blog Post Claude Skill
+        </h1>
+        <time className="text-gray-500">May 13, 2026</time>
+      </header>
+
+      <p className="lead text-xl text-gray-700 mb-6">
+        Creating my first Claude Skill and using it to create a blog post
+      </p>
+
+      <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">The Problem</h2>
+      <p>
+        Adding a blog post to this site is a multi-step process. You need to create a new{" "}
+        <code>page.tsx</code> file under <code>app/blog/[slug]/</code>, then manually
+        register the post in <code>lib/posts.ts</code> so it shows up on the blog index.
+        Miss either step and things break in confusing ways — a post that renders but
+        doesn&apos;t appear in the list, or a link in the index that 404s.
+      </p>
+      <p>
+        Since I can go a few months not touching the codebase, it&apos;s not complicated, but it&apos;s the kind of workflow that is easy to forget. 
+        I already documented it in{" "} <code>CLAUDE.md</code> so Claude Code could follow along, but I wanted something even more automatic.
+      </p>
+
+      <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Claude Skills</h2>
+      <p>
+        Claude Code supports custom slash commands called <em>skills</em>. A skill is just
+        a Markdown file stored in <code>.claude/commands/</code> at the root of your
+        project. When you type <code>/skill-name</code> in the Claude Code prompt, it
+        loads that file as an instruction set and executes it.
+      </p>
+      <p>
+        Skills can accept arguments (via <code>$ARGUMENTS</code>), ask follow-up
+        questions, read and write files, and do anything else Claude Code can normally
+        do — they just package a repeatable workflow into a single command.
+      </p>
+
+      <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Building /new-blog-post</h2>
+      <p>
+        I created <code>.claude/commands/new-blog-post.md</code> with instructions that
+        mirror what I&apos;d tell Claude manually. The skill:
+      </p>
+      <ol>
+        <li>
+          Asks for a title, slug, excerpt, and date (or accepts the title as a direct
+          argument to skip the first prompt)
+        </li>
+        <li>
+          Creates <code>app/blog/[slug]/page.tsx</code> from a standard template with
+          the correct Tailwind classes and formatting
+        </li>
+        <li>
+          Reads <code>lib/posts.ts</code> and prepends the new entry to the{" "}
+          <code>posts</code> array so the blog index stays up to date
+        </li>
+      </ol>
+      <p>
+        That&apos;s it. The skill is just Markdown — no code, no build step. It&apos;s closer to
+        writing a good prompt than writing a program.
+      </p>
+
+      <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">A CMS Without the CMS</h2>
+      <p>
+        I&apos;ve played around with the idea of using a proper CMS for this website — a database, a web UI
+        for writing posts, maybe a draft/publish workflow. But I
+        keep coming back to the fact that code and git already give me most of what I&apos;d
+        want from a CMS: version history, a clear publish moment (merging to main), the
+        ability to write and preview locally (or with Cloud Run revision URLs) before anything goes live.
+      </p>
+      <p>
+        The Claude Skill bridges that gap between a CMS and my git workflow — it handles the file management
+        so I can focus on writing. It&apos;s not a CMS, but it gives me a similar publishing
+        experience while keeping everything in the repo where I want it.
+      </p>
+
+      <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">The Meta Part</h2>
+      <p>
+        This post was created using the Claude Skill! I typed{" "}
+        <code>/new-blog-post</code>, provided the title and excerpt, and Claude Code
+        scaffolded the file and updated <code>lib/posts.ts</code> automatically. Then I
+        asked it to write the first draft of the post body and it had enough context from the
+        skill file and the codebase to do it without any extra explanation.
+      </p>
+      <p>
+        For a personal site I update sporadically, it&apos;s the difference between publishing
+        something and putting it off.
+      </p>
+    </article>
+  );
+}
