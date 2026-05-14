@@ -10,7 +10,7 @@ export const posts: BlogPost[] = [
     title: "Blog Post Claude Skill",
     date: "05/13/2026",
     slug: "blog-post-claude-skill",
-    excerpt: "Creating my first Claude Skill and using it to create a blog post",
+    excerpt: "Creating my first Claude Code skill and using it to create a blog post",
   },
   {
     title: "Setting Up a Custom Domain for Cloud Run",

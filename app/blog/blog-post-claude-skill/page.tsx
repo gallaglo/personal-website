@@ -3,13 +3,13 @@ export default function BlogPost() {
     <article className="prose prose-gray max-w-none">
       <header className="mb-8">
         <h1 className="text-4xl font-bold mb-2 font-sans">
-          Blog Post Claude Skill
+          Blog Post Claude Code Skill
         </h1>
         <time className="text-gray-500">May 13, 2026</time>
       </header>
 
       <p className="lead text-xl text-gray-700 mb-6">
-        Creating my first Claude Skill and using it to create a blog post
+        Creating my first Claude Code skill and using it to create a blog post
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">The Problem</h2>
@@ -25,7 +25,7 @@ export default function BlogPost() {
         I already documented it in{" "} <code>CLAUDE.md</code> so Claude Code could follow along, but I wanted something even more automatic.
       </p>
 
-      <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Claude Skills</h2>
+      <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Claude Code Skills</h2>
       <p className="mb-4">
         Claude Code supports custom slash commands called <em>skills</em>. A skill lives under <code>.claude/skills/</code> at the root of your
         project — a directory per skill, with a <code>SKILL.md</code> file inside. When you type <code>/skill-name</code> in the Claude Code prompt, it
@@ -69,7 +69,7 @@ export default function BlogPost() {
         <a href="https://cloud.google.com/run/docs/rollouts-rollbacks-traffic-migration#tags" target="_blank" rel="noopener noreferrer">revision URLs</a>) before anything goes live.
       </p>
       <p>
-        The Claude Skill bridges that gap between a CMS and my git workflow — it handles the file management
+        The Claude Code skill bridges that gap between a CMS and my git workflow — it handles the file management
         so I can focus on writing. It&apos;s not a CMS, but it gives me a similar publishing
         experience while keeping everything in the repo where I want it.
       </p>
