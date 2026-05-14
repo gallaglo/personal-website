@@ -27,19 +27,22 @@ export default function BlogPost() {
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Claude Skills</h2>
       <p className="mb-4">
-        Claude Code supports custom slash commands called <em>skills</em>. A skill is a Markdown file stored in <code>.claude/commands/</code> at the root of your
-        project. When you type <code>/skill-name</code> in the Claude Code prompt, it
+        Claude Code supports custom slash commands called <em>skills</em>. A skill lives under <code>.claude/skills/</code> at the root of your
+        project — a directory per skill, with a <code>SKILL.md</code> file inside. When you type <code>/skill-name</code> in the Claude Code prompt, it
         loads that file as an instruction set and executes it.
       </p>
       <p>
         Skills can accept arguments (via <code>$ARGUMENTS</code>), ask follow-up
         questions, read and write files, and do anything else Claude Code can normally
-        do — they just package a repeatable workflow into a single command.
+        do — they just package a repeatable workflow into a single command. They follow
+        the{" "}
+        <a href="https://agentskills.io" target="_blank" rel="noopener noreferrer">Agent Skills</a>{" "}
+        open standard, so the format is portable across AI tools that support it.
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Building /new-blog-post</h2>
       <p className="mb-4">
-        I created <code>.claude/commands/new-blog-post.md</code> with instructions that
+        I created <code>.claude/skills/new-blog-post/SKILL.md</code> with instructions that
         mirror what I&apos;d tell Claude manually. The skill:
       </p>
       <ol>
