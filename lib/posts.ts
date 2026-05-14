@@ -7,7 +7,7 @@ export interface BlogPost {
 
 export const posts: BlogPost[] = [
   {
-    title: "Blog Post Claude Skill",
+    title: "Blog Post Claude Code Skill",
     date: "05/13/2026",
     slug: "blog-post-claude-skill",
     excerpt: "Creating my first Claude Code skill and using it to create a blog post",
