@@ -17,11 +17,10 @@ export default function BlogPost() {
         Adding a blog post to this site is a multi-step process. You need to create a new{" "}
         <code>page.tsx</code> file under <code>app/blog/[slug]/</code>, then manually
         register the post in <code>lib/posts.ts</code> so it shows up on the blog index.
-        Miss either step and things break in confusing ways — a post that renders but
+        If I (or Claude) miss either step, then things may break in confusing ways — a post that renders but
         doesn&apos;t appear in the list, or a link in the index that 404s.
       </p>
       <p>
-        Since I can go a few months not touching the codebase, it&apos;s the kind of workflow that is easy to forget. 
         I already documented it in{" "} <code>CLAUDE.md</code> so Claude Code could follow along, but I wanted something even more automatic.
       </p>
 
@@ -45,7 +44,7 @@ export default function BlogPost() {
         I created <code>.claude/skills/new-blog-post/SKILL.md</code> with instructions that
         mirror what I&apos;d tell Claude manually. The skill:
       </p>
-      <ol>
+      <ol className="space-y-2">
         <li>
           Asks for a title, slug, excerpt, and date (or accepts the title as a direct
           argument to skip the first prompt)
@@ -81,8 +80,7 @@ export default function BlogPost() {
         <code>lib/posts.ts</code> automatically. I wrote the content, made revisions, and published.
       </p>
       <p>
-        My hope is that removing the mental overhead of remembering which files to touch will encourage me to publish more frequently.
-        The goal isn&apos;t to automate writing — it&apos;s to get the scaffolding out of the way so I can.
+        The goal isn&apos;t to automate writing — it&apos;s to stop letting file management be the reason I don&apos;t.
       </p>
     </article>
   );
