@@ -13,7 +13,7 @@ export default function BlogPost() {
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">The Problem</h2>
-      <p>
+      <p className="mb-4">
         Adding a blog post to this site is a multi-step process. You need to create a new{" "}
         <code>page.tsx</code> file under <code>app/blog/[slug]/</code>, then manually
         register the post in <code>lib/posts.ts</code> so it shows up on the blog index.
@@ -21,14 +21,13 @@ export default function BlogPost() {
         doesn&apos;t appear in the list, or a link in the index that 404s.
       </p>
       <p>
-        Since I can go a few months not touching the codebase, it&apos;s not complicated, but it&apos;s the kind of workflow that is easy to forget. 
+        Since I can go a few months not touching the codebase, it&apos;s the kind of workflow that is easy to forget. 
         I already documented it in{" "} <code>CLAUDE.md</code> so Claude Code could follow along, but I wanted something even more automatic.
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Claude Skills</h2>
-      <p>
-        Claude Code supports custom slash commands called <em>skills</em>. A skill is just
-        a Markdown file stored in <code>.claude/commands/</code> at the root of your
+      <p className="mb-4">
+        Claude Code supports custom slash commands called <em>skills</em>. A skill is a Markdown file stored in <code>.claude/commands/</code> at the root of your
         project. When you type <code>/skill-name</code> in the Claude Code prompt, it
         loads that file as an instruction set and executes it.
       </p>
@@ -39,7 +38,7 @@ export default function BlogPost() {
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">Building /new-blog-post</h2>
-      <p>
+      <p className="mb-4">
         I created <code>.claude/commands/new-blog-post.md</code> with instructions that
         mirror what I&apos;d tell Claude manually. The skill:
       </p>
@@ -57,18 +56,14 @@ export default function BlogPost() {
           <code>posts</code> array so the blog index stays up to date
         </li>
       </ol>
-      <p>
-        That&apos;s it. The skill is just Markdown — no code, no build step. It&apos;s closer to
-        writing a good prompt than writing a program.
-      </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">A CMS Without the CMS</h2>
-      <p>
+      <p className="mb-4">
         I&apos;ve played around with the idea of using a proper CMS for this website — a database, a web UI
-        for writing posts, maybe a draft/publish workflow. But I
-        keep coming back to the fact that code and git already give me most of what I&apos;d
-        want from a CMS: version history, a clear publish moment (merging to main), the
-        ability to write and preview locally (or with Cloud Run revision URLs) before anything goes live.
+        for writing posts, maybe a draft/publish workflow. But I keep coming back to the fact that code 
+        and git already give me most of what I&apos;d want from a CMS: version history, a clear publish moment (merging to main), 
+        the ability to write and preview locally (or with Cloud Run{" "}
+        <a href="https://cloud.google.com/run/docs/rollouts-rollbacks-traffic-migration#tags" target="_blank" rel="noopener noreferrer">revision URLs</a>) before anything goes live.
       </p>
       <p>
         The Claude Skill bridges that gap between a CMS and my git workflow — it handles the file management
@@ -77,16 +72,14 @@ export default function BlogPost() {
       </p>
 
       <h2 className="text-2xl font-bold mt-8 mb-4 font-sans">The Meta Part</h2>
-      <p>
-        This post was created using the Claude Skill! I typed{" "}
-        <code>/new-blog-post</code>, provided the title and excerpt, and Claude Code
-        scaffolded the file and updated <code>lib/posts.ts</code> automatically. Then I
-        asked it to write the first draft of the post body and it had enough context from the
-        skill file and the codebase to do it without any extra explanation.
+      <p className="mb-4">
+        This post was created using the skill. I typed <code>/new-blog-post</code>,
+        provided the title and excerpt, and Claude Code scaffolded the file and updated{" "}
+        <code>lib/posts.ts</code> automatically. I wrote the content, made revisions, and published.
       </p>
       <p>
-        For a personal site I update sporadically, it&apos;s the difference between publishing
-        something and putting it off.
+        My hope is that removing the mental overhead of remembering which files to touch will encourage me to publish more frequently.
+        The goal isn&apos;t to automate writing — it&apos;s to get the scaffolding out of the way so I can.
       </p>
     </article>
   );
