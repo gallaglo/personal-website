@@ -22,7 +22,7 @@ npm run get-gmail-token
 
 This is a Next.js App Router site. All routes live under `app/`, with standard Next.js conventions (`page.tsx`, `layout.tsx`).
 
-**Blog posts** are authored as plain React/JSX files — no MDX or markdown. Each post is a full `page.tsx` file under `app/blog/[slug]/`. The blog index at `app/blog/page.tsx` pulls from the manually maintained registry in `lib/posts.ts`. To add a new post: create the directory and page, then add an entry to `lib/posts.ts`.
+**Blog posts** are authored as plain React/JSX files — no MDX or markdown. Each post is a full `page.tsx` file under `app/blog/[slug]/`. The blog index at `app/blog/page.tsx` pulls from the manually maintained registry in `lib/posts.ts`. To add a new post, use the `/new-blog-post` skill — it creates the page file, registers it in `lib/posts.ts`, and confirms the RSS feed will pick it up automatically.
 
 **Contact form** (`app/contact/page.tsx` + `components/contact-form.tsx`) submits to `app/api/contact/route.ts`, which calls `lib/gmail.ts`. Gmail is accessed via OAuth2 with a refresh token — no app passwords or third-party email services. Required env vars are in `.env.example`; in production they come from GCP Secret Manager.
 
@@ -30,4 +30,11 @@ This is a Next.js App Router site. All routes live under `app/`, with standard N
 
 **Styling** uses Tailwind CSS with shadcn/ui components. Fonts are Montserrat (sans, headings) and Lora (serif, body), loaded via `next/font` in `app/layout.tsx`. The layout constrains content to `max-w-3xl`.
 
-**RSS feed** is a static file at `app/blog/rss.xml` — it must be updated manually when new posts are added.
+**RSS feed** at `app/blog/rss.xml` is auto-generated from `lib/posts.ts` — no manual update needed when adding posts via the `/new-blog-post` skill.
+
+## Skills
+
+Two Claude Code skills are defined in `.claude/skills/`:
+
+- `/new-blog-post` — scaffolds a new blog post: creates `app/blog/[slug]/page.tsx` and prepends an entry to `lib/posts.ts`. Accepts an optional title as an argument.
+- `/run-locally` — starts the dev server (port 3000) and takes a screenshot so you can verify the current state visually.
