@@ -1,23 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sun, Moon, BookOpen } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 
-type Theme = "light" | "dark" | "e-ink";
-
-const cycle: Theme[] = ["light", "dark", "e-ink"];
-
-const icons: Record<Theme, React.ReactNode> = {
-  light: <Sun size={16} />,
-  dark: <Moon size={16} />,
-  "e-ink": <BookOpen size={16} />,
-};
-
-const labels: Record<Theme, string> = {
-  light: "Light",
-  dark: "Dark",
-  "e-ink": "E-ink",
-};
+type Theme = "light" | "dark";
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("light");
@@ -25,14 +11,16 @@ export function ThemeToggle() {
 
   useEffect(() => {
     const stored = localStorage.getItem("theme") as Theme | null;
-    if (stored && cycle.includes(stored)) {
+    if (stored === "light" || stored === "dark") {
       setTheme(stored);
+    } else {
+      setTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     }
     setMounted(true);
   }, []);
 
   function toggle() {
-    const next = cycle[(cycle.indexOf(theme) + 1) % cycle.length];
+    const next: Theme = theme === "light" ? "dark" : "light";
     setTheme(next);
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
@@ -43,11 +31,11 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      aria-label={`Switch theme (current: ${labels[theme]})`}
+      aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
       className="flex items-center gap-1.5 text-sm hover:text-gray-600"
     >
-      {icons[theme]}
-      <span>{labels[theme]}</span>
+      {theme === "light" ? <Sun size={16} /> : <Moon size={16} />}
+      <span>{theme === "light" ? "Light" : "Dark"}</span>
     </button>
   );
 }
