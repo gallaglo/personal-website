@@ -460,10 +460,17 @@ If your certificate shows "Unknown" status with "Certificate issuance pending" m
 - **Persistent across deployments** - Domain mapping survives service updates
 - **No additional configuration** - Future deployments automatically work with your custom domain
 
+## Claude Code Skills
+
+Two skills are defined in `.claude/skills/` for common workflows:
+
+- `/new-blog-post [title]` — scaffolds a new post: creates `app/blog/[slug]/page.tsx` and registers it in `lib/posts.ts`. The RSS feed auto-updates from `lib/posts.ts`.
+- `/run-locally` — starts the dev server and takes a screenshot to verify the current state.
+
 ## Customization
 
 - Edit `app/page.tsx` to update your About page content
-- Add blog posts in `app/blog/page.tsx`
+- Add blog posts with `/new-blog-post` or manually in `app/blog/[slug]/page.tsx` + `lib/posts.ts`
 - Add projects in `app/projects/page.tsx`
 - Update social links in `app/page.tsx`
 - Add your actual GitHub/Twitter handles in the Connect section
