@@ -1,0 +1,61 @@
+name: Cleanup Preview Revision
+
+on:
+  pull_request:
+    types: [closed]
+  delete:
+
+jobs:
+  cleanup-preview:
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+      (github.event_name == 'delete' && github.event.ref_type == 'branch')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Resolve branch name
+        id: branch
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            RAW="${{ github.head_ref }}"
+          else
+            RAW="${{ github.event.ref }}"
+          fi
+          CLEAN=$(echo "$RAW" | sed 's/[^a-zA-Z0-9-]/-/g' | tr '[:upper:]' '[:lower:]')
+          echo "name=${CLEAN}" >> $GITHUB_OUTPUT
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Find revision for tag
+        id: revision
+        run: |
+          REVISION=$(gcloud run services describe personal-website \
+            --region=${{ secrets.GCP_REGION }} \
+            --format=json \
+            | jq -r '.status.traffic[] | select(.tag == "${{ steps.branch.outputs.name }}") | .revisionName // empty')
+          echo "name=${REVISION}" >> $GITHUB_OUTPUT
+
+      - name: Remove traffic tag
+        if: steps.revision.outputs.name != ''
+        run: |
+          gcloud run services update-traffic personal-website \
+            --remove-tags=${{ steps.branch.outputs.name }} \
+            --region=${{ secrets.GCP_REGION }}
+
+      - name: Delete revision
+        if: steps.revision.outputs.name != ''
+        run: |
+          gcloud run revisions delete ${{ steps.revision.outputs.name }} \
+            --region=${{ secrets.GCP_REGION }} \
+            --quiet
