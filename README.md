@@ -253,12 +253,16 @@ Create a production environment in your GitHub repository and add these secrets:
 
 #### How It Works
 
-The GitHub Actions workflow (`.github/workflows/deploy.yml`) will:
+Two workflows handle the full lifecycle:
+
+**`.github/workflows/deploy.yml`** runs on every push:
 1. **Build on every branch** - Docker images are built and tagged with the commit SHA
 2. **Push to Artifact Registry** - All images are stored for auditability
 3. **Deploy to Cloud Run**:
    - **Main branch**: Deploys to production with `:latest` tag and receives all traffic
-   - **Other branches**: Creates preview URLs with `--no-traffic` flag for testing
+   - **Other branches**: Creates a tagged preview revision with `--no-traffic` for testing
+
+**`.github/workflows/cleanup-preview.yml`** runs on PR merge or branch deletion — removes the traffic tag and deletes the preview revision from Cloud Run.
 
 **Note:** The first deployment must come from the main branch. Cloud Run doesn't allow `--no-traffic` when creating a new service.
 
