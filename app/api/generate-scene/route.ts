@@ -46,7 +46,7 @@ export async function POST(req: Request) {
           "Content-Type": "application/json",
         };
 
-        // 1. Create session — user_id and session_state are nested under "session"
+        // 1. Create session to pass initial input to the agent via session state
         const userId = crypto.randomUUID();
         const sessionRes = await fetch(`${baseUrl}/${resourceName}/sessions`, {
           method: "POST",
@@ -64,27 +64,24 @@ export async function POST(req: Request) {
         }
 
         const session = await sessionRes.json();
-        // Creation may return an LRO; the actual session resource is in response.name
+        // Creation may return an LRO; actual session resource is in response.name
         const sessionName: string = session.response?.name ?? session.name;
         const sessionId = sessionName.split("/").pop();
 
         send("progress", { message: "Session created, running pipeline…" });
 
-        // 2. streamQuery — called on the reasoning engine directly; session context via body
-        const queryRes = await fetch(
-          `${baseUrl}/${resourceName}:streamQuery`,
-          {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              input: {
-                user_id: userId,
-                session_id: sessionId,
-                message: "generate",
-              },
-            }),
-          }
-        );
+        // 2. streamQuery — called directly on the reasoning engine
+        const queryRes = await fetch(`${baseUrl}/${resourceName}:streamQuery`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            input: {
+              user_id: userId,
+              session_id: sessionId,
+              message: "generate",
+            },
+          }),
+        });
 
         if (!queryRes.ok || !queryRes.body) {
           const text = await queryRes.text();
@@ -96,9 +93,16 @@ export async function POST(req: Request) {
 
         send("progress", { message: "Pipeline running…" });
 
-        // 3. Consume the SSE stream. Only set_validation_result tool calls carry
-        //    structured data — buffer score/feedback, last call wins.
-        //    All other events (model text, tool responses) are ignored.
+        // 3. Parse the stream. Each line is a raw JSON object (not SSE).
+        //    All output values come from actions.state_delta — no session GET needed.
+        //
+        //    vision_agent  → state_delta.scene_description  (progress signal)
+        //    codegen_agent → state_delta.threejs_code        (last write wins)
+        //    validator_agent function_response
+        //                  → state_delta.validation_score    (last write wins)
+        //                  → state_delta.validation_feedback
+        //                  → actions.escalate == true        (pipeline done)
+        let threejsCode: string | null = null;
         let validationScore: number | null = null;
         let validationFeedback: string | null = null;
 
@@ -106,7 +110,7 @@ export async function POST(req: Request) {
         const decoder = new TextDecoder();
         let buf = "";
 
-        while (true) {
+        outer: while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           buf += decoder.decode(value, { stream: true });
@@ -114,33 +118,37 @@ export async function POST(req: Request) {
           buf = lines.pop() ?? "";
 
           for (const line of lines) {
-            if (line.trim()) console.log("[stream-raw]", line);
-            if (!line.startsWith("data:")) continue;
-            const jsonStr = line.slice(5).trim();
-            if (!jsonStr) continue;
+            const trimmed = line.trim();
+            if (!trimmed) continue;
             try {
-              const event = JSON.parse(jsonStr) as Record<string, unknown>;
-              console.log("[stream-event]", JSON.stringify(event));
-              const parts =
-                ((event.content as Record<string, unknown>)
-                  ?.parts as unknown[]) ?? [];
-              for (const part of parts) {
-                if (typeof part !== "object" || part === null) continue;
-                const p = part as Record<string, unknown>;
-                const fc = p.function_call as
-                  | Record<string, unknown>
-                  | undefined;
-                if (
-                  fc?.name === "set_validation_result" &&
-                  typeof fc.args === "object" &&
-                  fc.args !== null
-                ) {
-                  const args = fc.args as Record<string, unknown>;
-                  if (typeof args.score === "number")
-                    validationScore = args.score;
-                  if (typeof args.feedback === "string")
-                    validationFeedback = args.feedback;
-                }
+              const event = JSON.parse(trimmed) as Record<string, unknown>;
+              const sd = (
+                (event.actions as Record<string, unknown>)
+                  ?.state_delta as Record<string, unknown>
+              ) ?? {};
+
+              if (typeof sd.scene_description === "string") {
+                send("progress", {
+                  message: "Scene analyzed, generating code…",
+                });
+              }
+              if (typeof sd.threejs_code === "string") {
+                threejsCode = sd.threejs_code;
+                send("progress", {
+                  message: "Code generated, running validation…",
+                });
+              }
+              if (typeof sd.validation_score === "number") {
+                validationScore = sd.validation_score;
+                validationFeedback =
+                  typeof sd.validation_feedback === "string"
+                    ? sd.validation_feedback
+                    : validationFeedback;
+              }
+
+              // escalate: true means the loop has exited — pipeline is done
+              if ((event.actions as Record<string, unknown>)?.escalate === true) {
+                break outer;
               }
             } catch {
               // skip malformed lines
@@ -148,59 +156,11 @@ export async function POST(req: Request) {
           }
         }
 
-        // 4. GET session state — the only reliable source for threejs_code.
-        //    The agent may run on a different session than the one we created,
-        //    so list sessions by userId and pick the most recently updated one.
-        // The agent may run on a different session than the one we pre-created,
-        // so list sessions by userId and pick the most recently updated one.
-        const listRes = await fetch(
-          `${baseUrl}/${resourceName}/sessions?filter=user_id="${userId}"`,
-          { headers }
-        );
-        let resolvedSessionId = sessionId;
-        if (listRes.ok) {
-          const listBody = (await listRes.json()) as Record<string, unknown>;
-          const sessions = (listBody.sessions as Record<string, unknown>[]) ?? [];
-          if (sessions.length > 0) {
-            sessions.sort((a, b) =>
-              String(b.updateTime ?? "").localeCompare(String(a.updateTime ?? ""))
-            );
-            const latest = String(sessions[0].name ?? "");
-            resolvedSessionId = latest.split("/").pop() ?? sessionId;
-          }
-        }
-
-        const stateRes = await fetch(
-          `${baseUrl}/${resourceName}/sessions/${resolvedSessionId}`,
-          { headers }
-        );
-
-        if (!stateRes.ok) {
-          const text = await stateRes.text();
-          send("error", { message: `Failed to read session state: ${text}` });
-          return;
-        }
-
-        const stateBody = (await stateRes.json()) as Record<string, unknown>;
-        const state = (stateBody.sessionState ?? {}) as Record<string, unknown>;
-        const threejsCode =
-          typeof state.threejs_code === "string" ? state.threejs_code : null;
-
-        // Prefer session state values; fall back to stream-buffered values
-        const finalScore =
-          typeof state.validation_score === "number"
-            ? state.validation_score
-            : validationScore;
-        const finalFeedback =
-          typeof state.validation_feedback === "string"
-            ? state.validation_feedback
-            : validationFeedback;
-
         if (threejsCode) {
           send("result", {
             threejs_code: threejsCode,
-            validation_score: finalScore,
-            validation_feedback: finalFeedback,
+            validation_score: validationScore,
+            validation_feedback: validationFeedback,
           });
         } else {
           send("error", {
