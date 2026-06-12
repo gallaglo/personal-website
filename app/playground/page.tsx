@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SceneGenerator } from "@/components/scene-generator";
+import { PlaygroundChat } from "@/components/playground-chat";
 
 export const metadata: Metadata = {
   title: "Agent Playground — Logan Gallagher",
@@ -9,22 +9,11 @@ export const metadata: Metadata = {
 export default function Playground() {
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-2 font-sans">Agent Playground</h1>
-      <p className="text-gray-600 mb-10">
-        Interactive demos powered by AI agents I&apos;m building and deploying.
+      <h1 className="text-3xl font-bold mb-1 font-sans">Agent Playground</h1>
+      <p className="text-gray-600 text-sm mb-6">
+        Describe a scene or upload a photo — the agent generates a live 3D animation.
       </p>
-
-      <section>
-        <h2 className="text-xl font-semibold mb-1 font-sans">
-          Three.js Scene Generator
-        </h2>
-        <p className="text-gray-600 text-sm mb-6">
-          Upload a photo, describe a scene in text, or both — the agent will
-          generate a live interactive 3D scene rendered with Three.js r128.
-        </p>
-
-        <SceneGenerator />
-      </section>
+      <PlaygroundChat />
     </div>
   );
 }

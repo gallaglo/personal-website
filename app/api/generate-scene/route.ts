@@ -1,7 +1,15 @@
 import { GoogleAuth } from "google-auth-library";
 
-const resourceName = process.env.AGENT_ENGINE_RESOURCE_NAME!;
-const location = process.env.AGENT_ENGINE_LOCATION!;
+const RESOURCE = process.env.AGENT_ENGINE_RESOURCE_NAME!;
+const LOCATION = process.env.AGENT_ENGINE_LOCATION!;
+const BASE_BETA = `https://${LOCATION}-aiplatform.googleapis.com/v1beta1`;
+
+async function getToken() {
+  const auth = new GoogleAuth({
+    scopes: "https://www.googleapis.com/auth/cloud-platform",
+  });
+  return (await auth.getAccessToken())!;
+}
 
 export async function POST(req: Request) {
   const formData = await req.formData();
@@ -17,38 +25,29 @@ export async function POST(req: Request) {
   const sessionState: Record<string, string> = {};
   if (prompt) sessionState.prompt = prompt;
   if (imageFile) {
-    const buffer = Buffer.from(await imageFile.arrayBuffer());
-    sessionState.image = buffer.toString("base64");
+    sessionState.image = Buffer.from(await imageFile.arrayBuffer()).toString("base64");
     sessionState.mime_type = imageFile.type;
   }
-
-  const auth = new GoogleAuth({
-    scopes: "https://www.googleapis.com/auth/cloud-platform",
-  });
 
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (eventType: string, data: object) => {
+      const sse = (event: string, data: object) =>
         controller.enqueue(
-          encoder.encode(
-            `event: ${eventType}\ndata: ${JSON.stringify(data)}\n\n`
-          )
+          encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
         );
-      };
 
       try {
-        const token = await auth.getAccessToken();
-        const baseUrl = `https://${location}-aiplatform.googleapis.com/v1beta1`;
+        const token = await getToken();
         const headers = {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         };
 
-        // 1. Create session to pass initial input to the agent via session state
+        // 1. Create session — flat body, no "session" wrapper
         const userId = crypto.randomUUID();
-        const sessionRes = await fetch(`${baseUrl}/${resourceName}/sessions`, {
+        const sessionRes = await fetch(`${BASE_BETA}/${RESOURCE}/sessions`, {
           method: "POST",
           headers,
           body: JSON.stringify({
@@ -56,123 +55,76 @@ export async function POST(req: Request) {
             session_state: sessionState,
           }),
         });
-
         if (!sessionRes.ok) {
-          const text = await sessionRes.text();
-          send("error", { message: `Failed to create session: ${text}` });
-          return;
+          throw new Error(`Session creation failed: ${await sessionRes.text()}`);
         }
+        const sessionJson = await sessionRes.json();
+        console.log("[generate-scene] session response:", JSON.stringify(sessionJson));
+        // name is either a direct field or nested under response (LRO format)
+        const sessionName: string = sessionJson.response?.name ?? sessionJson.name ?? "";
+        const sessionId = sessionName.split("/").pop() ?? "";
+        console.log("[generate-scene] sessionId:", sessionId);
 
-        const session = await sessionRes.json();
-        // Creation may return an LRO; actual session resource is in response.name
-        const sessionName: string = session.response?.name ?? session.name;
-        const sessionId = sessionName.split("/").pop();
+        sse("progress", { message: "Session created, running pipeline…" });
 
-        send("progress", { message: "Session created, running pipeline…" });
+        const queryBody = { input: { user_id: userId, session_id: sessionId, message: "" } };
+        console.log("[generate-scene] streamQuery body:", JSON.stringify(queryBody));
 
-        // 2. streamQuery — called directly on the reasoning engine
-        const queryRes = await fetch(`${baseUrl}/${resourceName}:streamQuery`, {
+        // 2. streamQuery — raw NDJSON response (no ?alt=sse)
+        const queryRes = await fetch(`${BASE_BETA}/${RESOURCE}:streamQuery`, {
           method: "POST",
           headers,
-          body: JSON.stringify({
-            input: {
-              user_id: userId,
-              session_id: sessionId,
-              message: "generate",
-            },
-          }),
+          body: JSON.stringify(queryBody),
         });
-
         if (!queryRes.ok || !queryRes.body) {
-          const text = await queryRes.text();
-          send("error", {
-            message: `Pipeline failed (${queryRes.status}): ${text}`,
-          });
-          return;
+          throw new Error(`streamQuery failed (${queryRes.status}): ${await queryRes.text()}`);
         }
 
-        send("progress", { message: "Pipeline running…" });
+        sse("progress", { message: "Pipeline running…" });
 
-        // 3. Parse the stream. Each line is a raw JSON object (not SSE).
-        //    All output values come from actions.state_delta — no session GET needed.
-        //
-        //    vision_agent  → state_delta.scene_description  (progress signal)
-        //    codegen_agent → state_delta.threejs_code        (last write wins)
-        //    validator_agent function_response
-        //                  → state_delta.validation_score    (last write wins)
-        //                  → state_delta.validation_feedback
-        //                  → actions.escalate == true        (pipeline done)
-        let threejsCode: string | null = null;
-        let validationScore: number | null = null;
-        let validationFeedback: string | null = null;
+        // 3. Parse NDJSON — split on newlines, JSON-parse each non-empty line
+        let threejs_code = "";
+        let validation_score = 0;
+        let validation_feedback = "";
 
-        const reader = queryRes.body.getReader();
-        const decoder = new TextDecoder();
+        const reader = queryRes.body.pipeThrough(new TextDecoderStream()).getReader();
         let buf = "";
-
         outer: while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
-          buf += decoder.decode(value, { stream: true });
-          const lines = buf.split("\n");
-          buf = lines.pop() ?? "";
+          if (value) buf += value;
+          let nl: number;
+          while ((nl = buf.indexOf("\n")) !== -1) {
+            const line = buf.slice(0, nl).trim();
+            buf = buf.slice(nl + 1);
+            if (!line) continue;
+            const event = JSON.parse(line);
+            const sd = event.actions?.state_delta;
 
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed) continue;
-            try {
-              const event = JSON.parse(trimmed) as Record<string, unknown>;
-              const sd = (
-                (event.actions as Record<string, unknown>)
-                  ?.state_delta as Record<string, unknown>
-              ) ?? {};
-
-              if (typeof sd.scene_description === "string") {
-                send("progress", {
-                  message: "Scene analyzed, generating code…",
-                });
-              }
-              if (typeof sd.threejs_code === "string") {
-                threejsCode = sd.threejs_code;
-                send("progress", {
-                  message: "Code generated, running validation…",
-                });
-              }
-              if (typeof sd.validation_score === "number") {
-                validationScore = sd.validation_score;
-                validationFeedback =
-                  typeof sd.validation_feedback === "string"
-                    ? sd.validation_feedback
-                    : validationFeedback;
-              }
-
-              // escalate: true means the loop has exited — pipeline is done
-              if ((event.actions as Record<string, unknown>)?.escalate === true) {
-                break outer;
-              }
-            } catch {
-              // skip malformed lines
+            if (sd?.scene_description) {
+              sse("progress", { message: "Scene analyzed, generating code…" });
+            }
+            if (sd?.threejs_code) {
+              threejs_code = sd.threejs_code;
+              sse("progress", { message: "Code generated, running validation…" });
+            }
+            if (typeof sd?.validation_score === "number") {
+              validation_score = sd.validation_score;
+              validation_feedback = sd.validation_feedback ?? "";
+            }
+            if (event.actions?.escalate) {
+              sse("result", { threejs_code, validation_score, validation_feedback });
+              controller.close();
+              break outer;
             }
           }
+          if (done) break;
         }
 
-        if (threejsCode) {
-          send("result", {
-            threejs_code: threejsCode,
-            validation_score: validationScore,
-            validation_feedback: validationFeedback,
-          });
-        } else {
-          send("error", {
-            message: "Pipeline completed but no scene was generated.",
-          });
-        }
+        // escalate not seen — emit whatever we have
+        if (!controller.desiredSize && controller.desiredSize !== null) return; // already closed
+        sse("result", { threejs_code, validation_score, validation_feedback });
       } catch (err) {
-        controller.enqueue(
-          encoder.encode(
-            `event: error\ndata: ${JSON.stringify({ message: String(err) })}\n\n`
-          )
-        );
+        sse("error", { message: String(err) });
       } finally {
         controller.close();
       }
