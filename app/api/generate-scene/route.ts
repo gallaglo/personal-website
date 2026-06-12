@@ -51,13 +51,13 @@ export async function POST(req: Request) {
         let sessionId: string;
 
         if (existingSessionId && existingUserId) {
-          // Continuing an existing session — append an event with the new
-          // inputs as state_delta (direct PATCH is not allowed by the API)
+          // Continuing an existing session — append an event via :appendEvent
+          // custom method so the agent sees the new inputs in session state
           userId = existingUserId;
           sessionId = existingSessionId;
           const parts: { text: string }[] = prompt ? [{ text: prompt }] : [];
           const appendRes = await fetch(
-            `${BASE_BETA}/${RESOURCE}/sessions/${sessionId}/events`,
+            `${BASE_BETA}/${RESOURCE}/sessions/${sessionId}:appendEvent`,
             {
               method: "POST",
               headers,
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
           sse("progress", { message: "Session created, running pipeline…" });
         }
 
-        const queryBody = { input: { user_id: userId, session_id: sessionId, message: "" } };
+        const queryBody = { input: { user_id: userId, session_id: sessionId, message: prompt || "" } };
         console.log("[generate-scene] streamQuery body:", JSON.stringify(queryBody));
 
         // 2. streamQuery — raw NDJSON response (no ?alt=sse)
