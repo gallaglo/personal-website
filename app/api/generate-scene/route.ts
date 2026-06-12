@@ -51,16 +51,25 @@ export async function POST(req: Request) {
         let sessionId: string;
 
         if (existingSessionId && existingUserId) {
-          // Continuing an existing session — update state then reuse
+          // Continuing an existing session — append an event with the new
+          // inputs as state_delta (direct PATCH is not allowed by the API)
           userId = existingUserId;
           sessionId = existingSessionId;
-          const patchRes = await fetch(`${BASE_BETA}/${RESOURCE}/sessions/${sessionId}`, {
-            method: "PATCH",
-            headers,
-            body: JSON.stringify({ session_state: sessionState }),
-          });
-          if (!patchRes.ok) {
-            throw new Error(`Session update failed: ${await patchRes.text()}`);
+          const parts: { text: string }[] = prompt ? [{ text: prompt }] : [];
+          const appendRes = await fetch(
+            `${BASE_BETA}/${RESOURCE}/sessions/${sessionId}/events`,
+            {
+              method: "POST",
+              headers,
+              body: JSON.stringify({
+                author: "user",
+                content: { role: "user", parts },
+                actions: { state_delta: sessionState },
+              }),
+            }
+          );
+          if (!appendRes.ok) {
+            throw new Error(`Session update failed: ${await appendRes.text()}`);
           }
           console.log("[generate-scene] reusing sessionId:", sessionId);
           sse("progress", { message: "Running pipeline…" });
