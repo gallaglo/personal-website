@@ -15,6 +15,8 @@ export async function POST(req: Request) {
   const formData = await req.formData();
   const imageFile = formData.get("image") as File | null;
   const prompt = (formData.get("prompt") as string) ?? "";
+  const existingSessionId = (formData.get("session_id") as string) ?? "";
+  const existingUserId = (formData.get("user_id") as string) ?? "";
 
   if (!imageFile && !prompt) {
     return new Response("At least one of image or prompt is required", {
@@ -45,27 +47,44 @@ export async function POST(req: Request) {
           "Content-Type": "application/json",
         };
 
-        // 1. Create session — flat body, no "session" wrapper
-        const userId = crypto.randomUUID();
-        const sessionRes = await fetch(`${BASE_BETA}/${RESOURCE}/sessions`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            user_id: userId,
-            session_state: sessionState,
-          }),
-        });
-        if (!sessionRes.ok) {
-          throw new Error(`Session creation failed: ${await sessionRes.text()}`);
-        }
-        const sessionJson = await sessionRes.json();
-        console.log("[generate-scene] session response:", JSON.stringify(sessionJson));
-        // name is either a direct field or nested under response (LRO format)
-        const sessionName: string = sessionJson.response?.name ?? sessionJson.name ?? "";
-        const sessionId = sessionName.split("/").pop() ?? "";
-        console.log("[generate-scene] sessionId:", sessionId);
+        let userId: string;
+        let sessionId: string;
 
-        sse("progress", { message: "Session created, running pipeline…" });
+        if (existingSessionId && existingUserId) {
+          // Continuing an existing session — update state then reuse
+          userId = existingUserId;
+          sessionId = existingSessionId;
+          const patchRes = await fetch(`${BASE_BETA}/${RESOURCE}/sessions/${sessionId}`, {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify({ session_state: sessionState }),
+          });
+          if (!patchRes.ok) {
+            throw new Error(`Session update failed: ${await patchRes.text()}`);
+          }
+          console.log("[generate-scene] reusing sessionId:", sessionId);
+          sse("progress", { message: "Running pipeline…" });
+        } else {
+          // First turn — create a new session
+          userId = crypto.randomUUID();
+          const sessionRes = await fetch(`${BASE_BETA}/${RESOURCE}/sessions`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ user_id: userId, session_state: sessionState }),
+          });
+          if (!sessionRes.ok) {
+            throw new Error(`Session creation failed: ${await sessionRes.text()}`);
+          }
+          const sessionJson = await sessionRes.json();
+          console.log("[generate-scene] session response:", JSON.stringify(sessionJson));
+          const sessionName: string = sessionJson.response?.name ?? sessionJson.name ?? "";
+          sessionId = sessionName.split("/").pop() ?? "";
+          console.log("[generate-scene] sessionId:", sessionId);
+
+          // Send session identifiers to the client so subsequent turns can reuse them
+          sse("session", { session_id: sessionId, user_id: userId });
+          sse("progress", { message: "Session created, running pipeline…" });
+        }
 
         const queryBody = { input: { user_id: userId, session_id: sessionId, message: "" } };
         console.log("[generate-scene] streamQuery body:", JSON.stringify(queryBody));

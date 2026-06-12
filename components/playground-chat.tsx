@@ -161,6 +161,7 @@ export function PlaygroundChat() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const sessionRef = useRef<{ sessionId: string; userId: string } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -226,6 +227,10 @@ export function PlaygroundChat() {
     const formData = new FormData();
     if (userMsg.text) formData.append("prompt", userMsg.text);
     if (capturedFile) formData.append("image", capturedFile);
+    if (sessionRef.current) {
+      formData.append("session_id", sessionRef.current.sessionId);
+      formData.append("user_id", sessionRef.current.userId);
+    }
 
     function patchAssistant(patch: Partial<AssistantMessage>) {
       setMessages((prev) =>
@@ -255,7 +260,9 @@ export function PlaygroundChat() {
         if (!data || !eventType) return;
         try {
           const parsed = JSON.parse(data);
-          if (eventType === "progress") {
+          if (eventType === "session") {
+            sessionRef.current = { sessionId: parsed.session_id, userId: parsed.user_id };
+          } else if (eventType === "progress") {
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === assistantId
