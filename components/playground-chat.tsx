@@ -27,17 +27,22 @@ type Message = UserMessage | AssistantMessage;
 
 // ---------- SceneCanvas ----------
 
+// Single shared slot so only one WebGL context is alive at a time.
+// Browsers cap active contexts (~8-16); silently killing the oldest one
+// causes a black canvas on subsequent renders.
+let activeDispose: (() => void) | null = null;
+
 function SceneCanvas({ code }: { code: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const disposeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const THREE = (window as any).THREE;
     if (!THREE || !canvasRef.current) return;
 
-    disposeRef.current?.();
-    disposeRef.current = null;
+    // Tear down any previously running scene before starting a new one
+    activeDispose?.();
+    activeDispose = null;
 
     const canvas = canvasRef.current;
     let raf1: number, raf2: number;
@@ -55,7 +60,7 @@ function SceneCanvas({ code }: { code: string }) {
             ? code + "\nif (typeof init === 'function') return init(canvas);"
             : code;
           const dispose = new Function("THREE", "canvas", wrapped)(THREE, canvas);
-          if (typeof dispose === "function") disposeRef.current = dispose;
+          if (typeof dispose === "function") activeDispose = dispose;
         } catch (err) {
           console.error("Three.js execution error:", err);
         }
@@ -65,8 +70,11 @@ function SceneCanvas({ code }: { code: string }) {
     return () => {
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
-      disposeRef.current?.();
-      disposeRef.current = null;
+      // Only dispose if this instance still owns the active slot
+      if (activeDispose) {
+        activeDispose();
+        activeDispose = null;
+      }
     };
   }, [code]);
 

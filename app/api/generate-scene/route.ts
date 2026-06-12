@@ -63,6 +63,7 @@ export async function POST(req: Request) {
               headers,
               body: JSON.stringify({
                 author: "user",
+                timestamp: Date.now() / 1000,
                 content: { role: "user", parts },
                 actions: { state_delta: sessionState },
               }),
