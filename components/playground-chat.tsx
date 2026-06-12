@@ -73,7 +73,7 @@ function SceneCanvas({ code }: { code: string }) {
   return (
     <canvas
       ref={canvasRef}
-      className="w-full rounded-xl border border-gray-200"
+      className="w-full rounded-xl border border-gray-200 dark:border-zinc-700"
       style={{ aspectRatio: "16/9" }}
     />
   );
@@ -84,17 +84,17 @@ function SceneCanvas({ code }: { code: string }) {
 function AssistantBubble({ msg }: { msg: AssistantMessage }) {
   return (
     <div className="flex items-start gap-3 w-full">
-      <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 ring-1 ring-gray-200 mt-0.5">
+      <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 ring-1 ring-gray-200 dark:ring-zinc-700 mt-0.5">
         <Sparkles size={13} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         {msg.status === "thinking" && msg.progressLines.length === 0 && (
-          <p className="text-[13px] leading-relaxed text-gray-400 font-sans animate-pulse">
+          <p className="text-[13px] leading-relaxed text-gray-400 dark:text-zinc-500 font-sans animate-pulse">
             Thinking…
           </p>
         )}
         {msg.progressLines.map((line, i) => (
-          <p key={i} className="text-[13px] leading-relaxed text-gray-600 font-sans">
+          <p key={i} className="text-[13px] leading-relaxed text-gray-600 dark:text-zinc-400 font-sans">
             {line}
           </p>
         ))}
@@ -106,14 +106,14 @@ function AssistantBubble({ msg }: { msg: AssistantMessage }) {
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium font-sans ${
                     msg.validationScore >= 80
-                      ? "bg-green-100 text-green-800"
-                      : "bg-yellow-100 text-yellow-800"
+                      ? "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400"
+                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300"
                   }`}
                 >
                   Score: {msg.validationScore}/100
                 </span>
                 {msg.validationFeedback && (
-                  <p className="text-xs text-gray-500 font-sans">
+                  <p className="text-xs text-gray-500 dark:text-zinc-500 font-sans">
                     {msg.validationFeedback}
                   </p>
                 )}
@@ -140,7 +140,7 @@ function UserBubble({ msg }: { msg: UserMessage }) {
         <img
           src={msg.imagePreview}
           alt="Attached"
-          className="h-20 w-20 rounded-xl object-cover border border-gray-200"
+          className="h-20 w-20 rounded-xl object-cover border border-gray-200 dark:border-zinc-700"
         />
       )}
       {msg.text && (
@@ -344,7 +344,7 @@ export function PlaygroundChat() {
         <div className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
             <div className="flex h-full items-center justify-center">
-              <p className="text-sm text-gray-400 font-sans text-center max-w-xs">
+              <p className="text-sm text-gray-400 dark:text-zinc-500 font-sans text-center max-w-xs">
                 Describe a scene or upload an image to generate a 3D animation.
               </p>
             </div>
@@ -363,16 +363,16 @@ export function PlaygroundChat() {
         </div>
 
         {/* Input */}
-        <div className="border-t border-gray-200 pt-4 shrink-0">
+        <div className="border-t border-gray-200 dark:border-zinc-700 pt-4 shrink-0">
           <form onSubmit={handleSubmit}>
-            <div className="relative rounded-2xl border border-gray-300 bg-white transition-all focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400">
+            <div className="relative rounded-2xl border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 transition-all focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400">
               {imagePreview && (
                 <div className="px-3 pt-2.5">
                   <div className="relative inline-block">
                     <img
                       src={imagePreview}
                       alt="Attached"
-                      className="h-12 w-12 rounded-lg object-cover border border-gray-200"
+                      className="h-12 w-12 rounded-lg object-cover border border-gray-200 dark:border-zinc-700"
                     />
                     <button
                       type="button"
@@ -404,7 +404,7 @@ export function PlaygroundChat() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="rounded-lg p-1.5 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="rounded-lg p-1.5 text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
                   aria-label="Attach image"
                 >
                   <Paperclip size={16} />
@@ -412,7 +412,7 @@ export function PlaygroundChat() {
                 <button
                   type="submit"
                   disabled={!canSubmit}
-                  className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-200 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed transition-colors"
                   aria-label="Send"
                 >
                   <ArrowUp size={14} />
@@ -427,7 +427,7 @@ export function PlaygroundChat() {
               onChange={handleFileInput}
             />
             {!threeReady && (
-              <p className="mt-1.5 text-xs text-gray-400 font-sans">
+              <p className="mt-1.5 text-xs text-gray-400 dark:text-zinc-500 font-sans">
                 Loading renderer…
               </p>
             )}
