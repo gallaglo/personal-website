@@ -62,7 +62,7 @@ jobs:
             --region=${{ secrets.GCP_REGION }} \
             --platform=managed \
             --allow-unauthenticated \
-            --update-secrets="GMAIL_USER=gmail-user:latest,GMAIL_CLIENT_ID=gmail-client-id:latest,GMAIL_CLIENT_SECRET=gmail-client-secret:latest,GMAIL_REFRESH_TOKEN=gmail-refresh-token:latest"
+            --update-secrets="GMAIL_USER=gmail-user:latest,GMAIL_CLIENT_ID=gmail-client-id:latest,GMAIL_CLIENT_SECRET=gmail-client-secret:latest,GMAIL_REFRESH_TOKEN=gmail-refresh-token:latest,AGENT_ENGINE_RESOURCE_NAME=agent-engine-resource-name:latest,AGENT_ENGINE_LOCATION=agent-engine-location:latest"
 
       - name: Route traffic to latest revision
         if: github.ref == 'refs/heads/main'
@@ -82,4 +82,4 @@ jobs:
             --allow-unauthenticated \
             --no-traffic \
             --tag=${BRANCH_NAME} \
-            --update-secrets="GMAIL_USER=gmail-user:latest,GMAIL_CLIENT_ID=gmail-client-id:latest,GMAIL_CLIENT_SECRET=gmail-client-secret:latest,GMAIL_REFRESH_TOKEN=gmail-refresh-token:latest"
+            --update-secrets="GMAIL_USER=gmail-user:latest,GMAIL_CLIENT_ID=gmail-client-id:latest,GMAIL_CLIENT_SECRET=gmail-client-secret:latest,GMAIL_REFRESH_TOKEN=gmail-refresh-token:latest,AGENT_ENGINE_RESOURCE_NAME=agent-engine-resource-name:latest,AGENT_ENGINE_LOCATION=agent-engine-location:latest"

@@ -32,6 +32,8 @@ This is a Next.js App Router site. All routes live under `app/`, with standard N
 
 **RSS feed** at `app/blog/rss.xml` is auto-generated from `lib/posts.ts` — no manual update needed when adding posts via the `/new-blog-post` skill.
 
+**Agent Playground** (`app/playground/page.tsx` + `components/playground-chat.tsx` + `components/scene-generator.tsx`) is a multi-turn chat UI that accepts text prompts and optional image uploads. It calls `app/api/generate-scene/route.ts`, which manages a Vertex AI Agent Engine session (creating on the first turn, reusing via `:appendEvent` on subsequent turns) and streams results back as SSE. The agent returns Three.js code that is executed and rendered live in-browser. Required env vars: `AGENT_ENGINE_RESOURCE_NAME` (full Vertex AI resource path, e.g. `projects/.../locations/.../reasoningEngines/...`) and `AGENT_ENGINE_LOCATION` (e.g. `us-west1`). In production these come from GCP Secret Manager.
+
 ## Skills
 
 Two Claude Code skills are defined in `.claude/skills/`:

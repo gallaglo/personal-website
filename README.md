@@ -10,6 +10,7 @@ Built with Next.js, TypeScript, Tailwind CSS, and shadcn/ui. Hosted at [logangal
 - Contact form using Gmail API with OAuth2 (secure, no app passwords)
 - Blog with technical posts, art and my musings
 - Projects showcase with GitHub repos
+- Agent Playground — multi-turn chat that generates and renders Three.js scenes via Vertex AI Agent Engine
 - Fully responsive
 - Cloud Run deployment with GitHub Actions CI/CD
 
@@ -138,6 +139,8 @@ echo -n "your-email@gmail.com" | gcloud secrets create gmail-user --data-file=-
 echo -n "your-client-id" | gcloud secrets create gmail-client-id --data-file=-
 echo -n "your-client-secret" | gcloud secrets create gmail-client-secret --data-file=-
 echo -n "your-refresh-token" | gcloud secrets create gmail-refresh-token --data-file=-
+echo -n "projects/.../locations/.../reasoningEngines/..." | gcloud secrets create agent-engine-resource-name --data-file=-
+echo -n "us-west1" | gcloud secrets create agent-engine-location --data-file=-
 
 # Get your Cloud Run service account
 gcloud run services describe personal-website \
@@ -145,7 +148,7 @@ gcloud run services describe personal-website \
   --format="value(spec.template.spec.serviceAccountName)"
 
 # Grant access to secrets (replace YOUR_SERVICE_ACCOUNT)
-for secret in gmail-user gmail-client-id gmail-client-secret gmail-refresh-token; do
+for secret in gmail-user gmail-client-id gmail-client-secret gmail-refresh-token agent-engine-resource-name agent-engine-location; do
   gcloud secrets add-iam-policy-binding $secret \
     --member="serviceAccount:YOUR_SERVICE_ACCOUNT" \
     --role="roles/secretmanager.secretAccessor"
