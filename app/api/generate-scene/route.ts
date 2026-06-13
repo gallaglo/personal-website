@@ -63,7 +63,8 @@ export async function POST(req: Request) {
               headers,
               body: JSON.stringify({
                 author: "user",
-                timestamp: Date.now() / 1000,
+                invocation_id: crypto.randomUUID(),
+                timestamp: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
                 content: { role: "user", parts },
                 actions: { state_delta: sessionState },
               }),

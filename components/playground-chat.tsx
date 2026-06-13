@@ -2,7 +2,7 @@
 
 import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Paperclip, Sparkles, X } from "lucide-react";
+import { ArrowUp, Paperclip, SquarePen, Sparkles, X } from "lucide-react";
 
 // ---------- Types ----------
 
@@ -34,11 +34,14 @@ let activeDispose: (() => void) | null = null;
 
 function SceneCanvas({ code }: { code: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [execError, setExecError] = useState<string | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const THREE = (window as any).THREE;
     if (!THREE || !canvasRef.current) return;
+
+    setExecError(null);
 
     // Tear down any previously running scene before starting a new one
     activeDispose?.();
@@ -55,6 +58,21 @@ function SceneCanvas({ code }: { code: string }) {
         const rect = canvas.getBoundingClientRect();
         canvas.width = Math.round(rect.width) || 640;
         canvas.height = Math.round(rect.height) || 360;
+
+        // Patch THREE.WebGLRenderer so agent-generated code always draws to our
+        // canvas element instead of creating its own and appending it to <body>.
+        const OrigRenderer = THREE.WebGLRenderer;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        THREE.WebGLRenderer = function (opts?: Record<string, any>) {
+          return new OrigRenderer({ ...(opts ?? {}), canvas });
+        };
+        THREE.WebGLRenderer.prototype = OrigRenderer.prototype;
+
+        // Swallow any document.body.appendChild(renderer.domElement) calls.
+        const origAppend = document.body.appendChild.bind(document.body);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (document.body as any).appendChild = (el: Node) => (el === canvas ? origAppend(el) : el);
+
         try {
           const wrapped = code.includes("function init")
             ? code + "\nif (typeof init === 'function') return init(canvas);"
@@ -63,6 +81,11 @@ function SceneCanvas({ code }: { code: string }) {
           if (typeof dispose === "function") activeDispose = dispose;
         } catch (err) {
           console.error("Three.js execution error:", err);
+          setExecError(String(err));
+        } finally {
+          THREE.WebGLRenderer = OrigRenderer;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (document.body as any).appendChild = origAppend;
         }
       });
     });
@@ -79,11 +102,18 @@ function SceneCanvas({ code }: { code: string }) {
   }, [code]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="w-full rounded-xl border border-gray-200 dark:border-zinc-700"
-      style={{ aspectRatio: "16/9" }}
-    />
+    <div className="w-full">
+      <canvas
+        ref={canvasRef}
+        className="w-full rounded-xl border border-gray-200 dark:border-zinc-700"
+        style={{ aspectRatio: "16/9" }}
+      />
+      {execError && (
+        <pre className="mt-2 rounded-lg bg-red-50 dark:bg-red-950/30 p-3 text-xs text-red-600 dark:text-red-400 overflow-x-auto font-mono whitespace-pre-wrap">
+          {execError}
+        </pre>
+      )}
+    </div>
   );
 }
 
@@ -193,6 +223,13 @@ export function PlaygroundChat() {
     ta.style.height = "auto";
     ta.style.height = `${Math.min(ta.scrollHeight, 120)}px`;
   }, [input]);
+
+  function resetConversation() {
+    setMessages([]);
+    sessionRef.current = null;
+    clearImage();
+    setInput("");
+  }
 
   function clearImage() {
     setImageFile(null);
@@ -355,6 +392,19 @@ export function PlaygroundChat() {
         className="flex flex-col"
         style={{ height: "calc(100vh - 260px)", minHeight: "480px" }}
       >
+        {/* Messages header */}
+        {messages.length > 0 && (
+          <div className="flex justify-end pb-2 shrink-0">
+            <button
+              onClick={resetConversation}
+              className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-zinc-500 hover:text-gray-700 dark:hover:text-zinc-300 transition-colors font-sans"
+            >
+              <SquarePen size={13} />
+              New conversation
+            </button>
+          </div>
+        )}
+
         {/* Messages */}
         <div className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
